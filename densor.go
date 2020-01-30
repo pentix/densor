@@ -14,8 +14,13 @@ func main() {
 	logger.Println("Starting densor...")
 	readConfig()
 
+	logger.Println("-----------------------------------------------------------------------------")
+	logger.Println("Number of remote instances: ", len(config.RemoteInstances))
+	logger.Println("Number of sensors:          ", len(config.Sensors))
+	logger.Println("Data Directory:             ", config.DataDir)
 	logger.Println("Instance UUID:              ", config.UUID)
 	logger.Println("Instance DisplayName:       ", config.DisplayName)
+	logger.Println("-----------------------------------------------------------------------------")
 
 	initSensors()
 }

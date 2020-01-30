@@ -15,17 +15,17 @@ type RemoteInstance struct {
 type LocalConfig struct {
 	UUID            string
 	DisplayName     string
-	DataDir			string
-	RemoteInstances []RemoteInstance
-	Sensors 		[]Sensor
+	DataDir         string
+	RemoteInstances map[string]RemoteInstance
+	Sensors         map[string]Sensor
 
-	config			*viper.Viper
+	config *viper.Viper
 }
 
 func readConfig() {
 	// Actual config file
 	configDir, err := os.UserConfigDir()
-	configPath := configDir + "/densor.yaml"
+	configPath := configDir + "/densor.json"
 	if err != nil {
 		panic(err)
 	}
@@ -37,55 +37,68 @@ func readConfig() {
 	}
 
 	defaultDataDir := homeDir + "/.densor/"
-	os.Mkdir(defaultDataDir, 0644)
-
+	if err := os.Mkdir(defaultDataDir, 0755); !os.IsExist(err) {
+		logger.Fatal("Could not create default data directory:", err)
+	}
 
 	// Default values
 	UUID := generateUUID()
 	viper.SetDefault("UUID", UUID)
 	viper.SetDefault("DisplayName", "Host-"+UUID)
 	viper.SetDefault("DataDir", defaultDataDir)
-	viper.SetDefault("RemoteInstances", []RemoteInstance{})
-	viper.SetDefault("Sensors", []Sensor{})
+	viper.SetDefault("RemoteInstances", map[string]RemoteInstance{})
+	viper.SetDefault("Sensors", map[string]Sensor{})
 
 	// Try to parse possible existing yaml file or create it
 	viper.SetConfigFile(configPath)
 	if err := viper.ReadInConfig(); err != nil {
-		logger.Println("Error reading the configuration:", err)
-	}
-	if err := viper.WriteConfig(); err != nil {
-		panic(err)
+		if os.IsNotExist(err) {
+			logger.Println("Creating empty configuration file")
+			if err := viper.WriteConfig(); err != nil {
+				logger.Fatal(err)
+			}
+		} else {
+			logger.Fatal("Error reading the configuration:", err)
+		}
 	}
 
 	// Read everything into the LocalConfig struct
 	config.UUID = viper.GetString("UUID")
 	config.DisplayName = viper.GetString("DisplayName")
+	config.DataDir = viper.GetString("DataDir")
 
 	if err := viper.UnmarshalKey("RemoteInstances", &config.RemoteInstances); err != nil {
-		panic(err)
+		logger.Fatal(err)
 	}
-
 	if err := viper.UnmarshalKey("Sensors", &config.Sensors); err != nil {
-		panic(err)
+		logger.Fatal(err)
 	}
 
 	// Set viper instance for Sensors access
 	config.config = viper.GetViper()
 
-	logger.Println("Number of remote instances: ", len(config.RemoteInstances))
-	logger.Println("Number of sensors:          ", len(config.Sensors))
 }
 
 func initSensors() {
 	// Read measurements
 	for _, sensor := range config.Sensors {
 		sensor.measurements = viper.New()
+		sensor.measurements.SetDefault("measurements", []SensorMeasurement{})
 		sensor.measurements.SetConfigFile(config.DataDir + sensor.UUID + ".json")
 		if err := sensor.measurements.ReadInConfig(); err != nil {
-			logger.Printf("Error sensor configuration for sensor %s [%s]\n", sensor.UUID, sensor.DisplayName)
-			logger.Printf("%s", err)
-			logger.Printf("Skipping initialization of sensor\n")
-			continue
+			if os.IsNotExist(err) {
+				// In case measurements file did not exist, simply create it
+				logger.Printf("Info: Creating empty measurements file for sensor %s [%s]", sensor.UUID, sensor.DisplayName)
+				if err := sensor.measurements.WriteConfig(); err != nil {
+					logger.Fatal("Error creating the measurements file:", err)
+				}
+			} else {
+				// Otherwise
+				logger.Printf("Error initializing sensor %s [%s]\n", sensor.UUID, sensor.DisplayName)
+				logger.Println(err)
+				logger.Printf("Skipping initialization of sensor\n")
+				continue
+			}
 		}
 
 		go sensor.enableMeasurements()
