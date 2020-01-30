@@ -22,5 +22,5 @@ func main() {
 	logger.Println("Instance DisplayName:       ", config.DisplayName)
 	logger.Println("-----------------------------------------------------------------------------")
 
-	initSensors()
+	startSensors()
 }

@@ -79,7 +79,7 @@ func readConfig() {
 
 }
 
-func initSensors() {
+func startSensors() {
 	// Read measurements
 	for _, sensor := range config.Sensors {
 		sensor.measurements = viper.New()

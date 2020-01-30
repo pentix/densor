@@ -84,7 +84,8 @@ func (s *Sensor) enableMeasurements() {
 		if err != nil {
 			logger.Printf("Error in sensor %s [%s]: %s", s.UUID, s.DisplayName, err)
 		} else {
-			s.measurements.Set("measurements", measurement)
+			soFar := s.measurements.GetSllice("measurements")
+			s.measurements.Set("measurements", s.measurements.Get("measurements").append(measurement))
 			s.incrementNextMeasurement()
 			if err := s.measurements.WriteConfig(); err != nil {
 				logger.Printf("Error in sensor %s [%s] saving measurement to disk: %s", s.UUID, s.DisplayName, err)
