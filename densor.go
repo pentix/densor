@@ -17,4 +17,5 @@ func main() {
 	logger.Println("Instance UUID:              ", config.UUID)
 	logger.Println("Instance DisplayName:       ", config.DisplayName)
 
+	initSensors()
 }
