@@ -18,30 +18,26 @@ type Sensor struct {
 	Type            int
 	NextMeasurement int64
 	Settings        map[string]interface{}
+	Measurements    []SensorMeasurement
 
-	measurements *viper.Viper
-}
-
-func (s *Sensor) incrementNextMeasurement() {
-	compositeKey := "Sensors." + s.UUID + ".NextMeasurement"
-	newVal := config.config.GetInt64(compositeKey) + 1
-	config.config.Set(compositeKey, newVal)
+	sensorFile *viper.Viper
 }
 
 func (s *Sensor) settingsString(key string) string {
-	compositeKey := "Sensors." + s.UUID + ".settings." + key
+	compositeKey := "sensor.settings." + key
 	logger.Println("Asking for", compositeKey)
-	return config.config.GetString(compositeKey)
+
+	return s.sensorFile.GetString(compositeKey)
 }
 
 func (s *Sensor) settingsStringSlice(key string) []string {
-	compositeKey := "Sensors." + s.UUID + ".settings." + key
-	return config.config.GetStringSlice(compositeKey)
+	compositeKey := "sensor.settings." + key
+	return s.sensorFile.GetStringSlice(compositeKey)
 }
 
 func (s *Sensor) settingsStringMap(key string) map[string]string {
-	compositeKey := "Sensors." + s.UUID + ".settings." + key
-	return config.config.GetStringMapString(compositeKey)
+	compositeKey := "sensor.settings." + key
+	return s.sensorFile.GetStringMapString(compositeKey)
 }
 
 func (s *Sensor) sense() (SensorMeasurement, error) {
@@ -77,23 +73,30 @@ func (s *Sensor) sense() (SensorMeasurement, error) {
 	}
 }
 
+func (s *Sensor) addMeasurement(measurement SensorMeasurement) {
+	// Internal struct
+	s.Measurements = append(s.Measurements, measurement)
+	s.NextMeasurement += 1
+
+	// Write to disk
+	s.sensorFile.Set("Sensor", s)
+	/*s.sensorFile.Set("Sensor.Measurements", s.Measurements)
+	s.sensorFile.Set("Sensor.NextMeasurement", s.NextMeasurement)*/
+	if err := s.sensorFile.WriteConfig(); err != nil {
+		logger.Println("Error: Writing measurement to disk failed:", err)
+	}
+}
+
 // Will run in an infinite loop, supposed to run as own goroutine
 func (s *Sensor) enableMeasurements() {
+	logger.Printf("Enabled measurements for %s [%s]", s.UUID, s.DisplayName)
+
 	for {
 		measurement, err := s.sense()
 		if err != nil {
 			logger.Printf("Error in sensor %s [%s]: %s", s.UUID, s.DisplayName, err)
 		} else {
-			soFar := s.measurements.GetSllice("measurements")
-			s.measurements.Set("measurements", s.measurements.Get("measurements").append(measurement))
-			s.incrementNextMeasurement()
-			if err := s.measurements.WriteConfig(); err != nil {
-				logger.Printf("Error in sensor %s [%s] saving measurement to disk: %s", s.UUID, s.DisplayName, err)
-			}
-
-			if err := config.config.WriteConfig(); err != nil {
-				logger.Printf("Error in sensor %s [%s] updating NextMeasurement: %s", s.UUID, s.DisplayName, err)
-			}
+			s.addMeasurement(measurement)
 		}
 
 		time.Sleep(10 * time.Second)

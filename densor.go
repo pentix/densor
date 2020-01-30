@@ -6,20 +6,20 @@ import (
 )
 
 var logger *log.Logger
-var config LocalConfig
+var local LocalInstance
 
 func main() {
-	// Read config and start logging
+	// Read local and start logging
 	logger = log.New(os.Stdout, "", log.LstdFlags)
 	logger.Println("Starting densor...")
 	readConfig()
 
 	logger.Println("-----------------------------------------------------------------------------")
-	logger.Println("Number of remote instances: ", len(config.RemoteInstances))
-	logger.Println("Number of sensors:          ", len(config.Sensors))
-	logger.Println("Data Directory:             ", config.DataDir)
-	logger.Println("Instance UUID:              ", config.UUID)
-	logger.Println("Instance DisplayName:       ", config.DisplayName)
+	logger.Println("Number of remote instances: ", len(local.RemoteInstanceUUIDs))
+	logger.Println("Number of sensors:          ", len(local.SensorsUUIDs))
+	logger.Println("Data Directory:             ", local.DataDir)
+	logger.Println("Instance UUID:              ", local.UUID)
+	logger.Println("Instance DisplayName:       ", local.DisplayName)
 	logger.Println("-----------------------------------------------------------------------------")
 
 	startSensors()
