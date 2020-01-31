@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"time"
 )
 
 var logger *log.Logger
@@ -22,5 +24,28 @@ func main() {
 	logger.Println("Instance DisplayName:       ", local.DisplayName)
 	logger.Println("-----------------------------------------------------------------------------")
 
-	startSensors()
+	go startSensors()
+
+	// if  --dashboard  show dashboard
+	for {
+		showDashboard()
+		time.Sleep(1 * time.Second)
+	}
+
+	// else block!
+	// select {}
+}
+
+func showDashboard() {
+	fmt.Println("\033[2J")
+	fmt.Println("------------------------------------------------------------------------------------------------------------")
+	fmt.Println("Instance                                 Sensor                         Status         Last Update ")
+	fmt.Println("------------------------------------------------------------------------------------------------------------")
+
+	// Local sensors first
+	for _, sensor := range local.sensors {
+		fmt.Printf("%-35s      %-22s         [ OK ]         %s\n", local.DisplayName, sensor.DisplayName, sensor.lastUpdateTimestamp())
+	}
+
+	fmt.Println("------------------------------------------------------------------------------------------------------------")
 }

@@ -20,7 +20,7 @@ type LocalInstance struct {
 	SensorsUUIDs        []string
 
 	remoteInstances []RemoteInstance
-	sensors         []Sensor
+	sensors         []*Sensor
 	config          *viper.Viper
 }
 
@@ -117,6 +117,10 @@ func startSensors() {
 			continue
 		}
 
+		// Add sensor to the local instance
+		local.sensors = append(local.sensors, &sensor)
+
+		// Set sensor data file and start measurements
 		sensor.sensorFile = reader
 		go sensor.enableMeasurements()
 	}

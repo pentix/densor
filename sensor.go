@@ -91,6 +91,10 @@ func (s *Sensor) addMeasurement(measurement SensorMeasurement) {
 	}
 }
 
+func (s *Sensor) lastUpdateTimestamp() string {
+	return s.Measurements[len(s.Measurements)-1].Timestamp[0:19]
+}
+
 // Will run in an infinite loop, supposed to run as own goroutine
 func (s *Sensor) enableMeasurements() {
 	period, err := time.ParseDuration(s.settingsString("period"))
