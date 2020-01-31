@@ -39,7 +39,7 @@ func main() {
 func showDashboard() {
 	fmt.Println("\033[2J")
 	fmt.Println("------------------------------------------------------------------------------------------------------------")
-	fmt.Println("Instance                                 Sensor                         Status         Last Update ")
+	fmt.Println("\u001b[1mInstance                                 Sensor                         Status         Last Update\u001b[0m")
 	fmt.Println("------------------------------------------------------------------------------------------------------------")
 
 	// Local sensors first
