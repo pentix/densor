@@ -1,13 +1,9 @@
 package main
 
-import (
-	"time"
-)
-
 type SensorMeasurement struct {
 	SensorUUID    string
 	MeasurementId int64
-	Timestamp     time.Time
+	Timestamp     string // Viper issue: https://github.com/spf13/viper/issues/496
 	Error         bool
 	Data          map[string]interface{}
 }

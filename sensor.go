@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os/exec"
+	"reflect"
 	"time"
 
 	"github.com/spf13/viper"
@@ -24,20 +25,24 @@ type Sensor struct {
 }
 
 func (s *Sensor) settingsString(key string) string {
-	compositeKey := "sensor.settings." + key
-	logger.Println("Asking for", compositeKey)
-
-	return s.sensorFile.GetString(compositeKey)
+	return fmt.Sprint(s.Settings[key])
 }
 
 func (s *Sensor) settingsStringSlice(key string) []string {
-	compositeKey := "sensor.settings." + key
-	return s.sensorFile.GetStringSlice(compositeKey)
-}
+	if reflect.TypeOf(s.Settings[key]).Kind() != reflect.Slice {
+		logger.Println("Error parsing string slice from settings of sensor", s.UUID)
+		return nil
+	}
 
-func (s *Sensor) settingsStringMap(key string) map[string]string {
-	compositeKey := "sensor.settings." + key
-	return s.sensorFile.GetStringMapString(compositeKey)
+	v := reflect.ValueOf(s.Settings[key])
+	l := v.Len()
+
+	stringSlice := make([]string, l)
+	for i := 0; i < l; i++ {
+		stringSlice[i] = v.Index(i).String()
+	}
+
+	return stringSlice
 }
 
 func (s *Sensor) sense() (SensorMeasurement, error) {
@@ -60,7 +65,7 @@ func (s *Sensor) sense() (SensorMeasurement, error) {
 		measurement := SensorMeasurement{
 			SensorUUID:    s.UUID,
 			MeasurementId: s.NextMeasurement,
-			Timestamp:     time.Now(),
+			Timestamp:     time.Now().String(),
 			Error:         false,
 			Data:          sensorData,
 		}
@@ -80,6 +85,7 @@ func (s *Sensor) addMeasurement(measurement SensorMeasurement) {
 
 	// Write to disk
 	s.sensorFile.Set("Sensor", s)
+
 	/*s.sensorFile.Set("Sensor.Measurements", s.Measurements)
 	s.sensorFile.Set("Sensor.NextMeasurement", s.NextMeasurement)*/
 	if err := s.sensorFile.WriteConfig(); err != nil {

@@ -91,7 +91,7 @@ func startSensors() {
 			DisplayName:     sensorUUID,
 			Type:            0,
 			NextMeasurement: 0,
-			Settings:        map[string]interface{}{},
+			Settings:        map[string]interface{}{"executable": "", "args": []string{}},
 			Measurements:    []SensorMeasurement{},
 		})
 		reader.SetConfigFile(local.DataDir + sensorUUID + ".json")
