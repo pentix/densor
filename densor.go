@@ -43,23 +43,21 @@ func showDashboard() {
 	fmt.Println("------------------------------------------------------------------------------------------------------------")
 
 	// Local sensors first
-	for n := 0; n < 5; n++ {
-		for _, sensor := range local.sensors {
-			statusText, status := sensor.lastUpdateStatus()
-			var colorCode string
-			if status {
-				colorCode = "\033[32m"
-			} else {
-				colorCode = "\033[31m"
-			}
-
-			fmt.Printf("%s%-35s      %-22s          %-4s       %s\033[0m\n",
-				colorCode,
-				local.DisplayName,
-				sensor.DisplayName,
-				statusText,
-				sensor.lastUpdateTimestamp())
+	for _, sensor := range local.sensors {
+		statusText, status := sensor.lastUpdateStatus()
+		var colorCode string
+		if status {
+			colorCode = "\033[32m"
+		} else {
+			colorCode = "\033[31m"
 		}
+
+		fmt.Printf("%s%-35s      %-22s          %-4s       %s\033[0m\n",
+			colorCode,
+			local.DisplayName,
+			sensor.DisplayName,
+			statusText,
+			sensor.lastUpdateTimestamp())
 	}
 
 	fmt.Println("------------------------------------------------------------------------------------------------------------")
