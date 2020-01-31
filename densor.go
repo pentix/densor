@@ -12,7 +12,23 @@ var local LocalInstance
 
 func main() {
 	// Read local and start logging
-	logger = log.New(os.Stdout, "", log.LstdFlags)
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
+
+	defaultDataDir := homeDir + "/.densor/"
+	if err := os.Mkdir(defaultDataDir, 0755); err != nil && !os.IsExist(err) {
+		panic(fmt.Errorf("Could not create default data directory: %s", err))
+	}
+	logfile, err := os.OpenFile(defaultDataDir + "/densor.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+	defer logfile.Close()
+
+
+	logger = log.New(logfile, "", log.LstdFlags)
 	logger.Println("Starting densor...")
 	readConfig()
 

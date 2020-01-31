@@ -38,10 +38,8 @@ func readConfig() {
 		panic(err)
 	}
 
+	// This should already exist at this point :)
 	defaultDataDir := homeDir + "/.densor/"
-	if err := os.Mkdir(defaultDataDir, 0755); err != nil && !os.IsExist(err) {
-		logger.Fatal("Could not create default data directory:", err)
-	}
 
 	// Default values
 	UUID := generateUUID()
