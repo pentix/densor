@@ -86,12 +86,12 @@ func startSensors() {
 
 		// Prepare reading sensor data
 		reader := viper.New()
-		reader.SetDefault("sensor", Sensor{
+		reader.SetDefault("Sensor", Sensor{
 			UUID:            sensorUUID,
 			DisplayName:     sensorUUID,
 			Type:            0,
 			NextMeasurement: 0,
-			Settings:        map[string]interface{}{"executable": "", "args": []string{}},
+			Settings:        map[string]interface{}{"Period": "10m", "Executable": "", "Args": []string{}},
 			Measurements:    []SensorMeasurement{},
 		})
 		reader.SetConfigFile(local.DataDir + sensorUUID + ".json")
@@ -111,7 +111,7 @@ func startSensors() {
 
 		// Read sensor data into
 		var sensor Sensor
-		if err := reader.UnmarshalKey("sensor", &sensor); err != nil {
+		if err := reader.UnmarshalKey("Sensor", &sensor); err != nil {
 			logger.Printf("Error: Could not unmarshal sensor %s: %s", sensorUUID, err)
 			logger.Println("Skipping sensor!")
 			continue

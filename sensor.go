@@ -60,7 +60,7 @@ func (s *Sensor) sense() (SensorMeasurement, error) {
 			return SensorMeasurement{}, err
 		}
 
-		sensorData["output"] = string(output)
+		sensorData["Output"] = string(output)
 
 		measurement := SensorMeasurement{
 			SensorUUID:    s.UUID,
@@ -94,7 +94,14 @@ func (s *Sensor) addMeasurement(measurement SensorMeasurement) {
 
 // Will run in an infinite loop, supposed to run as own goroutine
 func (s *Sensor) enableMeasurements() {
-	logger.Printf("Enabled measurements for %s [%s]", s.UUID, s.DisplayName)
+	period, err := time.ParseDuration(s.settingsString("period"))
+	if err != nil {
+		logger.Printf("Error parsing period of sensor %s: %s", s.UUID, err)
+		logger.Println("Using 10 minutes as default period")
+		period = 10 * time.Minute
+	}
+
+	logger.Printf("Enabled measurements for %s [%s] @ %v", s.UUID, s.DisplayName, period)
 
 	for {
 		measurement, err := s.sense()
@@ -104,6 +111,6 @@ func (s *Sensor) enableMeasurements() {
 			s.addMeasurement(measurement)
 		}
 
-		time.Sleep(10 * time.Second)
+		time.Sleep(period)
 	}
 }
