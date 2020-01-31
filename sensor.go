@@ -91,6 +91,13 @@ func (s *Sensor) addMeasurement(measurement SensorMeasurement) {
 	}
 }
 
+func (s *Sensor) lastUpdateStatus() (string, bool) {
+	if s.Measurements[len(s.Measurements)-1].Error {
+		return "FAIL", false
+	}
+	return "OK", true
+}
+
 func (s *Sensor) lastUpdateTimestamp() string {
 	return s.Measurements[len(s.Measurements)-1].Timestamp[0:19]
 }
