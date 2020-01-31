@@ -39,7 +39,7 @@ func (s *Sensor) settingsStringSlice(key string) []string {
 
 	stringSlice := make([]string, l)
 	for i := 0; i < l; i++ {
-		stringSlice[i] = v.Index(i).String()
+		stringSlice[i] = fmt.Sprint(v.Index(i))
 	}
 
 	return stringSlice
@@ -70,7 +70,6 @@ func (s *Sensor) sense() (SensorMeasurement, error) {
 			Data:          sensorData,
 		}
 
-		logger.Println("Measurement completed:", measurement)
 		return measurement, err
 
 	default:
