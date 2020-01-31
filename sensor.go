@@ -53,23 +53,22 @@ func (s *Sensor) sense() (SensorMeasurement, error) {
 
 		command := exec.Command(executable, args...)
 
-		// Collect sensor data
-		sensorData := make(map[string]interface{})
-		output, err := command.Output()
-		if err != nil {
-			return SensorMeasurement{}, err
-		}
-
-		sensorData["Output"] = string(output)
-
 		measurement := SensorMeasurement{
 			SensorUUID:    s.UUID,
 			MeasurementId: s.NextMeasurement,
 			Timestamp:     time.Now().String(),
 			Error:         false,
-			Data:          sensorData,
+			Data:          make(map[string]interface{}),
 		}
 
+		// Collect sensor data
+		output, err := command.Output()
+		if err != nil {
+			return measurement, err
+		}
+
+		// If execution was successful, add the output
+		measurement.Data["Output"] = string(output)
 		return measurement, err
 
 	default:
@@ -106,11 +105,12 @@ func (s *Sensor) enableMeasurements() {
 	for {
 		measurement, err := s.sense()
 		if err != nil {
+			measurement.Error = true
+			measurement.Data["ErrorMessage"] = fmt.Sprint(err)
 			logger.Printf("Error in sensor %s [%s]: %s", s.UUID, s.DisplayName, err)
-		} else {
-			s.addMeasurement(measurement)
 		}
 
+		s.addMeasurement(measurement)
 		time.Sleep(period)
 	}
 }
