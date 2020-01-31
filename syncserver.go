@@ -16,7 +16,7 @@ func handleConn(conn net.Conn) {
 }
 
 func startSyncServer() {
-	listener, err := tls.Listen("tcp", "0.0.0.0:8333", generateTLSConfig())
+	listener, err := tls.Listen("tcp", ":8333", generateTLSConfig())
 	if err != nil {
 		panic(err)
 	}
