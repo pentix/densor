@@ -6,12 +6,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-type RemoteInstance struct {
-	UUID          string
-	DisplayName   string
-	RemoteAddress string
-}
-
 type LocalInstance struct {
 	UUID                string
 	DisplayName         string
