@@ -12,14 +12,16 @@ type RemoteInstance struct {
 	DisplayName   string
 	RemoteAddress string
 
-	tlsConn 	  *tls.Conn
-	connected 	  bool
+	tlsConn   *tls.Conn
+	connected bool
 }
 
 func (r *RemoteInstance) Connect() {
-	err := generateTLSCerts()
+	//err := generateTLSCerts()
 
-	tlsConfig := &tls.Config{InsecureSkipVerify: true}
+	keyPair, err := tls.LoadX509KeyPair(local.DataDir+"cert.pem", local.DataDir+"key.pem")
+
+	tlsConfig := &tls.Config{InsecureSkipVerify: true, Certificates: []tls.Certificate{keyPair}, ClientAuth: tls.RequireAnyClientCert}
 	r.tlsConn, err = tls.Dial("tcp", r.RemoteAddress, tlsConfig)
 	if err != nil {
 		fmt.Println(err)
@@ -28,7 +30,6 @@ func (r *RemoteInstance) Connect() {
 
 	r.connected = true
 	r.tlsConn.SetDeadline(time.Time{})
-
 
 	fmt.Println("Sending request")
 	r.SendRequest(Request{

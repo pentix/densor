@@ -3,8 +3,10 @@ package main
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/hex"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
@@ -19,10 +21,16 @@ func handleConn(conn net.Conn) {
 	tlsConn := conn.(*tls.Conn)
 	tlsConn.SetDeadline(time.Time{})
 
+	if err := tlsConn.Handshake(); err != nil {
+		fmt.Println("Error on TLS handshake:", err)
+	}
+
+	certUsed := tlsConn.ConnectionState().PeerCertificates[0]
+	sha256sum := sha256.Sum256(certUsed.Raw)
+	fmt.Println(hex.EncodeToString(sha256sum[:]))
+
 	var req Request
 	dec := json.NewDecoder(tlsConn)
-
-	fmt.Println("so far")
 
 	err := dec.Decode(&req)
 
@@ -36,7 +44,7 @@ func handleConn(conn net.Conn) {
 func startSyncServer() {
 	keyPair, err := tls.LoadX509KeyPair(local.DataDir+"cert.pem", local.DataDir+"key.pem")
 
-	tlsConfig := &tls.Config{InsecureSkipVerify:true, Certificates:[]tls.Certificate{keyPair}}
+	tlsConfig := &tls.Config{InsecureSkipVerify: true, Certificates: []tls.Certificate{keyPair}, ClientAuth: tls.RequireAnyClientCert}
 	listener, err := tls.Listen("tcp", ":8333", tlsConfig)
 	if err != nil {
 		panic(err)
@@ -54,7 +62,7 @@ func startSyncServer() {
 }
 
 func prepareForRemotes() {
-	generateTLSCerts()
+	//generateTLSCerts()
 }
 
 func generateTLSCerts() error {
