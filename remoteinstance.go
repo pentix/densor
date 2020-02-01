@@ -1,10 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"net"
 	"net/http"
 )
 
@@ -13,7 +13,7 @@ type RemoteInstance struct {
 	DisplayName   string
 	RemoteAddress string
 
-	connection net.Conn
+	tlsClient http.Client
 }
 
 func (r *RemoteInstance) Connect() {
@@ -21,9 +21,9 @@ func (r *RemoteInstance) Connect() {
 
 	tlsConfig := tls.Config{InsecureSkipVerify: true}
 	transport := http.Transport{TLSClientConfig: &tlsConfig}
-	tlsClient := http.Client{Transport: &transport}
+	r.tlsClient = http.Client{Transport: &transport}
 
-	resp, err := tlsClient.Get(r.RemoteAddress)
+	resp, err := r.tlsClient.Get(r.RemoteAddress)
 	if err != nil {
 		panic(err)
 	}
@@ -37,4 +37,22 @@ func (r *RemoteInstance) Connect() {
 	fmt.Println("Err:", err)
 	fmt.Println(values)
 
+	r.SendRequest(Request{
+		RequestType: RequestTypeConnectionAttempt,
+		OriginUUID:  local.UUID,
+		Data: map[string]string{
+			"Test": "1234",
+		},
+	})
+
+}
+
+func (r *RemoteInstance) SendRequest(req Request) {
+	buffer := &bytes.Buffer{}
+	encoder := json.NewEncoder(buffer)
+
+	if err := encoder.Encode(req); err != nil {
+		fmt.Println("Error encoding request:", err)
+	}
+	r.tlsClient.Post("/", "text/json", buffer)
 }
