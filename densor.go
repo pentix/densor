@@ -46,7 +46,7 @@ func main() {
 	remotey := RemoteInstance{
 		UUID:          "Remotey",
 		DisplayName:   "Remotee",
-		RemoteAddress: "https://localhost:8333/",
+		RemoteAddress: "localhost:8333",
 	}
 
 	time.Sleep(1 * time.Second)

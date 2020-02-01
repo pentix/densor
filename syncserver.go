@@ -5,33 +5,51 @@ import (
 	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"io"
 	"math/big"
 	"net"
-	"net/http"
 	"os"
 	"time"
 )
 
 func handleConn(conn net.Conn) {
 	tlsConn := conn.(*tls.Conn)
+	tlsConn.SetDeadline(time.Time{})
 
-	buf := make([]byte, 4096)
-	tlsConn.Read(buf)
+	var req Request
+	dec := json.NewDecoder(tlsConn)
 
-	fmt.Println("Received: ", string(buf))
+	fmt.Println("so far")
+
+	err := dec.Decode(&req)
+
+	if err != nil {
+		fmt.Println("Error decoding stuff:", err)
+	}
+
+	fmt.Println("Received: ", req)
 }
 
 func startSyncServer() {
-	http.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
-		io.WriteString(w, "{\"msg\": \"Hello, TLS!\"}")
-	})
+	keyPair, err := tls.LoadX509KeyPair(local.DataDir+"cert.pem", local.DataDir+"key.pem")
 
-	err := http.ListenAndServeTLS(":8333", local.DataDir+"cert.pem", local.DataDir+"key.pem", nil)
+	tlsConfig := &tls.Config{InsecureSkipVerify:true, Certificates:[]tls.Certificate{keyPair}}
+	listener, err := tls.Listen("tcp", ":8333", tlsConfig)
 	if err != nil {
 		panic(err)
+	}
+
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		fmt.Println("Accepted connection")
+		go handleConn(conn)
 	}
 }
 

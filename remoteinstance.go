@@ -1,11 +1,10 @@
 package main
 
 import (
-	"bytes"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"net/http"
+	"time"
 )
 
 type RemoteInstance struct {
@@ -13,30 +12,25 @@ type RemoteInstance struct {
 	DisplayName   string
 	RemoteAddress string
 
-	tlsClient http.Client
+	tlsConn 	  *tls.Conn
+	connected 	  bool
 }
 
 func (r *RemoteInstance) Connect() {
 	err := generateTLSCerts()
 
-	tlsConfig := tls.Config{InsecureSkipVerify: true}
-	transport := http.Transport{TLSClientConfig: &tlsConfig}
-	r.tlsClient = http.Client{Transport: &transport}
-
-	resp, err := r.tlsClient.Get(r.RemoteAddress)
+	tlsConfig := &tls.Config{InsecureSkipVerify: true}
+	r.tlsConn, err = tls.Dial("tcp", r.RemoteAddress, tlsConfig)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
+		return
 	}
 
-	defer resp.Body.Close()
-	dec := json.NewDecoder(resp.Body)
+	r.connected = true
+	r.tlsConn.SetDeadline(time.Time{})
 
-	values := make(map[string]interface{})
-	err = dec.Decode(&values)
 
-	fmt.Println("Err:", err)
-	fmt.Println(values)
-
+	fmt.Println("Sending request")
 	r.SendRequest(Request{
 		RequestType: RequestTypeConnectionAttempt,
 		OriginUUID:  local.UUID,
@@ -44,15 +38,19 @@ func (r *RemoteInstance) Connect() {
 			"Test": "1234",
 		},
 	})
+	fmt.Println("Request sent :)")
 
 }
 
 func (r *RemoteInstance) SendRequest(req Request) {
-	buffer := &bytes.Buffer{}
-	encoder := json.NewEncoder(buffer)
+	if !r.connected {
+		fmt.Println("Error: Not connected to remote instance. (Yet trying to send a request)")
+		return
+	}
+
+	encoder := json.NewEncoder(r.tlsConn)
 
 	if err := encoder.Encode(req); err != nil {
 		fmt.Println("Error encoding request:", err)
 	}
-	r.tlsClient.Post("/", "text/json", buffer)
 }
