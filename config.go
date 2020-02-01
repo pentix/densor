@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"os"
 
 	"github.com/spf13/viper"
@@ -13,7 +14,8 @@ type LocalInstance struct {
 	RemoteInstanceUUIDs []string
 	SensorsUUIDs        []string
 
-	remoteInstances []RemoteInstance
+	keyPair         tls.Certificate
+	remoteInstances []*RemoteInstance
 	sensors         []*Sensor
 	config          *viper.Viper
 }

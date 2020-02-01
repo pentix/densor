@@ -17,23 +17,18 @@ type RemoteInstance struct {
 }
 
 func (r *RemoteInstance) Connect() {
-	//err := generateTLSCerts()
-
-	keyPair, err := tls.LoadX509KeyPair(local.DataDir+"cert.pem", local.DataDir+"key.pem")
-
-	tlsConfig := &tls.Config{InsecureSkipVerify: true, Certificates: []tls.Certificate{keyPair}, ClientAuth: tls.RequireAnyClientCert}
-	r.tlsConn, err = tls.Dial("tcp", r.RemoteAddress, tlsConfig)
+	tlsConfig := &tls.Config{InsecureSkipVerify: true, Certificates: []tls.Certificate{local.keyPair}, ClientAuth: tls.RequireAnyClientCert}
+	tlsConn, err := tls.Dial("tcp", r.RemoteAddress, tlsConfig)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
+	r.tlsConn = tlsConn
 	r.connected = true
 	r.tlsConn.SetDeadline(time.Time{})
 
-	fmt.Println("TLS Cert from Server:", SHA256FromTLSConn(r.tlsConn))
-
-	fmt.Println("Sending request")
+	fmt.Println("TLS Cert from Server:", SHA256FromTLSCert(r.tlsConn.ConnectionState().PeerCertificates[0]))
 	r.SendRequest(Request{
 		RequestType: RequestTypeConnectionAttempt,
 		OriginUUID:  local.UUID,
@@ -41,7 +36,6 @@ func (r *RemoteInstance) Connect() {
 			"Test": "1234",
 		},
 	})
-	fmt.Println("Request sent :)")
 
 }
 

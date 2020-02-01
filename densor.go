@@ -39,7 +39,9 @@ func main() {
 	logger.Println("Instance DisplayName:       ", local.DisplayName)
 	logger.Println("-----------------------------------------------------------------------------")
 
-	//generateTLSCerts()
+	if err := loadTLSCerts(); err != nil {
+		log.Fatal("Error loading TLS Certificate:", err)
+	}
 
 	go startSyncServer()
 
