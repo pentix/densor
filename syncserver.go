@@ -25,9 +25,7 @@ func handleConn(conn net.Conn) {
 		fmt.Println("Error on TLS handshake:", err)
 	}
 
-	certUsed := tlsConn.ConnectionState().PeerCertificates[0]
-	sha256sum := sha256.Sum256(certUsed.Raw)
-	fmt.Println(hex.EncodeToString(sha256sum[:]))
+	fmt.Println("SHA256 from Client:", SHA256FromTLSConn(tlsConn))
 
 	var req Request
 	dec := json.NewDecoder(tlsConn)
@@ -93,4 +91,10 @@ func generateTLSCerts() error {
 	certFile.Close()
 
 	return err
+}
+
+func SHA256FromTLSConn(tlsConn *tls.Conn) string {
+	certUsed := tlsConn.ConnectionState().PeerCertificates[0]
+	sha256sum := sha256.Sum256(certUsed.Raw)
+	return hex.EncodeToString(sha256sum[:])
 }

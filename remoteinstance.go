@@ -31,6 +31,8 @@ func (r *RemoteInstance) Connect() {
 	r.connected = true
 	r.tlsConn.SetDeadline(time.Time{})
 
+	fmt.Println("TLS Cert from Server:", SHA256FromTLSConn(r.tlsConn))
+
 	fmt.Println("Sending request")
 	r.SendRequest(Request{
 		RequestType: RequestTypeConnectionAttempt,
