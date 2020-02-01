@@ -39,12 +39,14 @@ func main() {
 	logger.Println("Instance DisplayName:       ", local.DisplayName)
 	logger.Println("-----------------------------------------------------------------------------")
 
+	//generateTLSCerts()
+
 	go startSyncServer()
 
 	remotey := RemoteInstance{
 		UUID:          "Remotey",
 		DisplayName:   "Remotee",
-		RemoteAddress: "localhost:8333",
+		RemoteAddress: "https://localhost:8333/",
 	}
 
 	time.Sleep(1 * time.Second)
