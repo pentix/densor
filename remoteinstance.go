@@ -51,3 +51,13 @@ func (r *RemoteInstance) SendRequest(req Request) {
 		fmt.Println("Error encoding request:", err)
 	}
 }
+
+func connectToRemoteInstances() {
+	remote := RemoteInstance{
+		UUID:          "Remotey",
+		DisplayName:   "Remotee",
+		RemoteAddress: "localhost:8333",
+	}
+
+	remote.Connect()
+}

@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-func loadTLSCerts() error {
+func loadTLSCerts() {
 	keyPair, err := tls.LoadX509KeyPair(local.DataDir+"cert.pem", local.DataDir+"key.pem")
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -41,8 +41,6 @@ func loadTLSCerts() error {
 
 	local.keyPair = keyPair
 	logger.Println("Loaded TLS Certificate from files")
-
-	return err
 }
 
 func generateTLSCerts() error {

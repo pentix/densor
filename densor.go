@@ -21,6 +21,7 @@ func main() {
 	if err := os.Mkdir(defaultDataDir, 0755); err != nil && !os.IsExist(err) {
 		panic(fmt.Errorf("Could not create default data directory: %s", err))
 	}
+
 	logfile, err := os.OpenFile(defaultDataDir+"/densor.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		panic(err)
@@ -39,21 +40,10 @@ func main() {
 	logger.Println("Instance DisplayName:       ", local.DisplayName)
 	logger.Println("-----------------------------------------------------------------------------")
 
-	if err := loadTLSCerts(); err != nil {
-		log.Fatal("Error loading TLS Certificate:", err)
-	}
+	loadTLSCerts()
 
 	go startSyncServer()
-
-	remotey := RemoteInstance{
-		UUID:          "Remotey",
-		DisplayName:   "Remotee",
-		RemoteAddress: "localhost:8333",
-	}
-
-	time.Sleep(1 * time.Second)
-	remotey.Connect()
-
+	go connectToRemoteInstances()
 	go startSensors()
 
 	// if  --dashboard  show dashboard
