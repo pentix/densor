@@ -55,7 +55,7 @@ func (r *RemoteInstance) Connect() bool {
 	tlsConfig := &tls.Config{InsecureSkipVerify: true, Certificates: []tls.Certificate{local.keyPair}, ClientAuth: tls.RequireAnyClientCert}
 	tlsConn, err := tls.Dial("tcp", r.RemoteAddress, tlsConfig)
 	if err != nil {
-		fmt.Println(err)
+		logger.Println("Info: Could not connect to", r.UUID, ":", err)
 		return false
 	}
 
@@ -67,7 +67,6 @@ func (r *RemoteInstance) Connect() bool {
 
 	// Verify identity
 	sha256Sum := SHA256FromTLSCert(r.tlsConn.ConnectionState().PeerCertificates[0])
-	fmt.Println("TLS Cert from Server:", sha256Sum)
 	if !matchesAuthorizedKey(r.UUID, sha256Sum) {
 		return false
 	}

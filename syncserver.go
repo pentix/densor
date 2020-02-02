@@ -36,7 +36,6 @@ func handleConn(conn net.Conn) {
 	}
 
 	sha256Sum := SHA256FromTLSCert(tlsConn.ConnectionState().PeerCertificates[0])
-	fmt.Println("SHA256 from Client:", sha256Sum)
 
 	// Now verify the identity
 	if !matchesAuthorizedKey(req.OriginUUID, sha256Sum) {

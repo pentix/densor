@@ -28,7 +28,7 @@ func main() {
 	}
 	defer logfile.Close()
 
-	logger = log.New(logfile, "", log.LstdFlags|log.Lshortfile)
+	logger = log.New(logfile, "", log.LstdFlags)
 	logger.Println("Starting densor...")
 	readConfig()
 
