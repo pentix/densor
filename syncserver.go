@@ -12,13 +12,8 @@ func handleConn(conn net.Conn) {
 	// Socket initialization
 	tlsConn := conn.(*tls.Conn)
 	tlsConn.SetDeadline(time.Time{})
-	defer tlsConn.Close()
 
-	// Protocol data for this connection
-	var originUUID string
-	var sha256Sum string
-
-	//enc := json.NewEncoder(tlsConn)
+	enc := json.NewEncoder(tlsConn)
 	dec := json.NewDecoder(tlsConn)
 
 	// Start TLS Connection
@@ -40,23 +35,60 @@ func handleConn(conn net.Conn) {
 		return
 	}
 
-	originUUID = req.OriginUUID
-	sha256Sum = SHA256FromTLSCert(tlsConn.ConnectionState().PeerCertificates[0])
+	sha256Sum := SHA256FromTLSCert(tlsConn.ConnectionState().PeerCertificates[0])
 	fmt.Println("SHA256 from Client:", sha256Sum)
 
 	// Now verify the identity
-	if !matchesAuthorizedKey(originUUID, sha256Sum) {
+	if !matchesAuthorizedKey(req.OriginUUID, sha256Sum) {
 		return
 	}
 
+	// Create a remoteInstance for this connection
+	remote := RemoteInstance{
+		UUID:          req.OriginUUID,
+		DisplayName:   req.Data["DisplayName"],
+		RemoteAddress: tlsConn.RemoteAddr().String(),
+		tlsConn:       tlsConn,
+		connected:     true,
+		enc:           enc,
+		dec:           dec,
+	}
+
+	// Todo: Mutex
+	// Don't allow multi-connections
+	found := false
+	for i, r := range local.remoteInstances {
+		if r.UUID == req.OriginUUID {
+			if !r.connected {
+				// If we know the remote instance, but weren't connected before
+				local.remoteInstances[i] = &remote
+				found = true
+			}
+
+			break
+		}
+	}
+
+	if !found {
+		local.remoteInstances = append(local.remoteInstances, &remote)
+	}
+
 	// Respond with ACK
-	//tlsConn.
+	remote.SendRequest(Request{
+		RequestType: RequestTypeConnectionACK,
+		OriginUUID:  local.UUID,
+		Data:        map[string]string{"DisplayName": local.DisplayName},
+	})
 
 	/**
 	At this point we are messages are the connection is established,
 	encrypted, authenticated and the protocol is initialized.
+
+	Since we established connection, we can now
+	wait and handle duplex requests
 	*/
 
+	remote.HandleIncomingRequests()
 }
 
 func startSyncServer() {
