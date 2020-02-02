@@ -12,7 +12,7 @@ func generateUUID() string {
 	for i := 0; i < 5; i++ {
 		t := ""
 		for j := 0; j < 5; j++ {
-			t += string(rand.Int()%26 + 65)
+			t += string(rand.Int()%26 + 97)
 		}
 		s += t + "-"
 	}
