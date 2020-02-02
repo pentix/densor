@@ -91,11 +91,11 @@ func (s *Sensor) addMeasurement(measurement SensorMeasurement) {
 	}
 }
 
-func (s *Sensor) lastUpdateStatus() (string, bool) {
-	if s.Measurements[len(s.Measurements)-1].Error {
-		return "FAIL", false
+func (s *Sensor) lastUpdateStatus() bool {
+	if s.Measurements[len(s.Measurements)-1].Error { // Todo take period into account (update should be new)
+		return false
 	}
-	return "OK", true
+	return true
 }
 
 func (s *Sensor) lastUpdateTimestamp() string {

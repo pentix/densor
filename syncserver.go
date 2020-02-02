@@ -55,13 +55,16 @@ func handleConn(conn net.Conn) {
 
 	// Todo: Mutex
 	// Don't allow multiple connections with the same instance
-	if _, contains := local.RemoteInstances[req.OriginUUID]; contains {
-		if !local.RemoteInstances[req.OriginUUID].connected {
-			// If we know the remote instance, but weren't connected before
-			local.RemoteInstances[req.OriginUUID].SetConnected(true)
+	found := false
+	for i, _ := range local.RemoteInstances {
+		if local.RemoteInstances[i].UUID == req.OriginUUID {
+			found = true
+			local.RemoteInstances[i].connected = true
 		}
-	} else {
-		local.RemoteInstances[req.OriginUUID] = remote
+	}
+
+	if !found {
+		local.RemoteInstances = append(local.RemoteInstances, remote)
 	}
 
 	// Respond with ACK

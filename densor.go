@@ -46,9 +46,11 @@ func main() {
 	go connectToRemoteInstances()
 	go startSensors()
 
+	go debug()
+
 	// if  --dashboard  show dashboard
 	for {
-		//showDashboard()
+		showDashboard()
 		time.Sleep(1 * time.Second)
 	}
 
@@ -64,11 +66,14 @@ func showDashboard() {
 
 	// Local sensors first
 	for _, sensor := range local.sensors {
-		statusText, status := sensor.lastUpdateStatus()
+		var statusText string
 		var colorCode string
-		if status {
+
+		if sensor.lastUpdateStatus() {
+			statusText = "OK"
 			colorCode = "\033[32m"
 		} else {
+			statusText = "FAIL"
 			colorCode = "\033[31m"
 		}
 
@@ -79,6 +84,41 @@ func showDashboard() {
 			statusText,
 			sensor.lastUpdateTimestamp())
 	}
+	fmt.Println("------------------------------------------------------------------------------------------------------------")
+
+	// Remote instances
+
+	fmt.Println("\n\n")
+	fmt.Println("------------------------------------------------------------------------------------------------------------")
+	fmt.Println("\033[1mRemote Instance                          Status       \033[0m")
+	fmt.Println("------------------------------------------------------------------------------------------------------------")
+
+	for _, remote := range local.RemoteInstances {
+
+		var statusText string
+		var colorCode string
+
+		if remote.connected {
+			statusText = "Connected"
+			colorCode = "\033[32m"
+		} else {
+			statusText = "Not Connected"
+			colorCode = "\033[31m"
+		}
+
+		fmt.Printf("%s%-35s      %-22s\033[0m\n",
+			colorCode,
+			remote.DisplayName,
+			statusText)
+	}
 
 	fmt.Println("------------------------------------------------------------------------------------------------------------")
+
+}
+
+func debug() {
+	for {
+		logger.Println(local.RemoteInstances, "\n\n\n")
+		time.Sleep(2 * time.Second)
+	}
 }

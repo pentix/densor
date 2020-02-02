@@ -21,10 +21,9 @@ type RemoteInstance struct {
 }
 
 func (r *RemoteInstance) HandleIncomingRequests() {
-	// Todo: defer close and
-	// Todo: cleanup in local.remoteInstances
-
 	logger.Printf("Info: RemoteInstance: Connected to %s. Now handling requests\n", r.UUID)
+	defer r.Disconnect()
+
 	for {
 		var req Request
 		if err := r.dec.Decode(&req); err != nil {
@@ -91,7 +90,19 @@ func (r *RemoteInstance) Connect() bool {
 
 	logger.Println("Connected to", ack.OriginUUID)
 	r.connected = true
+
+	logger.Println("yeaaa boiii", r)
+	debug()
+	logger.Println("oof")
+
 	return true
+}
+
+func (r *RemoteInstance) Disconnect() {
+	r.tlsConn.Close()
+	r.connected = false
+
+	logger.Println("Info: RemoteInstance: Disconnected from", r.UUID)
 }
 
 func (r *RemoteInstance) SendRequest(req Request) {
@@ -100,18 +111,15 @@ func (r *RemoteInstance) SendRequest(req Request) {
 	}
 }
 
-func (r RemoteInstance) SetConnected(status bool) {
-	r.connected = status
-}
-
 func connectToRemoteInstances() {
 	logger.Println("Info: Trying to connect to remote instances")
 
-	for _, remote := range local.RemoteInstances {
-		if remote.Connect() {
-			remote.HandleIncomingRequests()
+	// todo: mutex
+	for i, _ := range local.RemoteInstances {
+		if local.RemoteInstances[i].Connect() {
+			local.RemoteInstances[i].HandleIncomingRequests()
 		} else {
-			logger.Println("Error: Could not connect to", remote.UUID)
+			logger.Println("Error: Could not connect to", local.RemoteInstances[i].UUID)
 		}
 	}
 }

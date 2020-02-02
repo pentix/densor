@@ -12,7 +12,7 @@ type LocalInstance struct {
 	DisplayName     string
 	DataDir         string
 	SensorsUUIDs    []string
-	RemoteInstances map[string]RemoteInstance
+	RemoteInstances []RemoteInstance
 
 	keyPair        tls.Certificate
 	sensors        []*Sensor
@@ -42,7 +42,7 @@ func readConfig() {
 	viper.SetDefault("UUID", UUID)
 	viper.SetDefault("DisplayName", "Host-"+UUID)
 	viper.SetDefault("DataDir", defaultDataDir)
-	viper.SetDefault("RemoteInstances", []string{})
+	viper.SetDefault("RemoteInstances", []RemoteInstance{})
 	viper.SetDefault("Sensors", []string{})
 
 	// Try to parse possible existing yaml file or create it
@@ -66,6 +66,11 @@ func readConfig() {
 	if err := viper.UnmarshalKey("RemoteInstances", &local.RemoteInstances); err != nil {
 		logger.Fatal(err)
 	}
+
+	logger.Println("GOT ", len(local.RemoteInstances), " remotessssss")
+	go debug()
+	logger.Println("GOT ", len(local.RemoteInstances), " remotessssss")
+
 	if err := viper.UnmarshalKey("Sensors", &local.SensorsUUIDs); err != nil {
 		logger.Fatal(err)
 	}
