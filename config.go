@@ -18,6 +18,7 @@ type LocalInstance struct {
 	remoteInstances []*RemoteInstance
 	sensors         []*Sensor
 	config          *viper.Viper
+	authorizedKeys  *viper.Viper
 }
 
 func readConfig() {
@@ -72,6 +73,17 @@ func readConfig() {
 
 	// Set viper instance for Sensors access
 	local.config = viper.GetViper()
+
+	// Set viper instance for authorized keys
+	local.authorizedKeys = viper.New()
+	local.authorizedKeys.SetConfigFile(local.DataDir + "authorizedKeys.json")
+	if err := local.authorizedKeys.ReadInConfig(); err != nil {
+		if os.IsNotExist(err) {
+			local.authorizedKeys.WriteConfig()
+		} else {
+			logger.Fatal("Error reading the authorized keys file:", err)
+		}
+	}
 }
 
 func startSensors() {

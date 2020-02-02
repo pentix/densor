@@ -2,6 +2,7 @@ package main
 
 const (
 	RequestTypeConnectionAttempt = 1
+	RequestTypeConnectionACK     = 2
 )
 
 type Request struct {

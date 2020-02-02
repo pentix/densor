@@ -77,3 +77,17 @@ func SHA256FromTLSCert(cert *x509.Certificate) string {
 	sha256sum := sha256.Sum256(cert.Raw)
 	return hex.EncodeToString(sha256sum[:])
 }
+
+func matchesAuthorizedKey(instanceUUID, sha256Sum string) bool {
+	if local.authorizedKeys.IsSet(instanceUUID) {
+		if local.authorizedKeys.Get(instanceUUID) == sha256Sum {
+			return true
+		} else {
+			logger.Println("Error: Authorized Keys: Instance", instanceUUID, "provided wrong certificate!")
+			return false
+		}
+	}
+
+	logger.Println("Error: Authorized Keys: No entry for instance", instanceUUID)
+	return false
+}
