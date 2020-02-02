@@ -31,7 +31,7 @@ func handleConn(conn net.Conn) {
 
 	// First request should be an identifying connection attempt
 	if req.RequestType != RequestTypeConnectionAttempt {
-		logger.Printf("First request of %s was not a valid connection attempt (Type: %d", req.OriginUUID, req.RequestType)
+		logger.Printf("First request of %s was not a valid connection attempt (Type: %d)", req.OriginUUID, req.RequestType)
 		return
 	}
 
@@ -55,22 +55,14 @@ func handleConn(conn net.Conn) {
 	}
 
 	// Todo: Mutex
-	// Don't allow multi-connections
-	found := false
-	for i, r := range local.remoteInstances {
-		if r.UUID == req.OriginUUID {
-			if !r.connected {
-				// If we know the remote instance, but weren't connected before
-				local.remoteInstances[i] = &remote
-				found = true
-			}
-
-			break
+	// Don't allow multiple connections with the same instance
+	if _, contains := local.RemoteInstances[req.OriginUUID]; contains {
+		if !local.RemoteInstances[req.OriginUUID].connected {
+			// If we know the remote instance, but weren't connected before
+			local.RemoteInstances[req.OriginUUID].SetConnected(true)
 		}
-	}
-
-	if !found {
-		local.remoteInstances = append(local.remoteInstances, &remote)
+	} else {
+		local.RemoteInstances[req.OriginUUID] = remote
 	}
 
 	// Respond with ACK
@@ -97,6 +89,8 @@ func startSyncServer() {
 	if err != nil {
 		panic(err)
 	}
+
+	logger.Println("Info: SyncServer: Listening on", listener.Addr().String(), "for incoming requests")
 
 	for {
 		conn, err := listener.Accept()

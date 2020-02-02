@@ -28,12 +28,12 @@ func main() {
 	}
 	defer logfile.Close()
 
-	logger = log.New(logfile, "", log.LstdFlags)
+	logger = log.New(logfile, "", log.LstdFlags|log.Lshortfile)
 	logger.Println("Starting densor...")
 	readConfig()
 
 	logger.Println("-----------------------------------------------------------------------------")
-	logger.Println("Number of remote instances: ", len(local.RemoteInstanceUUIDs))
+	logger.Println("Number of remote instances: ", len(local.RemoteInstances))
 	logger.Println("Number of local sensors:    ", len(local.SensorsUUIDs))
 	logger.Println("Data Directory:             ", local.DataDir)
 	logger.Println("Instance UUID:              ", local.UUID)

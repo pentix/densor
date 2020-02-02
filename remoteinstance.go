@@ -23,7 +23,7 @@ func (r *RemoteInstance) HandleIncomingRequests() {
 	// Todo: defer close and
 	// Todo: cleanup in local.remoteInstances
 
-	fmt.Println("Info: Handling requests of", r.UUID)
+	logger.Printf("Info: RemoteInstance: Connected to %s. Now handling requests\n", r.UUID)
 	for {
 		var req Request
 		if err := r.dec.Decode(&req); err != nil {
@@ -42,6 +42,8 @@ func (r *RemoteInstance) HandleIncomingRequests() {
 }
 
 func (r *RemoteInstance) Connect() bool {
+	logger.Println("Info: Connect(): Trying to connect to", r.UUID)
+
 	tlsConfig := &tls.Config{InsecureSkipVerify: true, Certificates: []tls.Certificate{local.keyPair}, ClientAuth: tls.RequireAnyClientCert}
 	tlsConn, err := tls.Dial("tcp", r.RemoteAddress, tlsConfig)
 	if err != nil {
@@ -76,7 +78,7 @@ func (r *RemoteInstance) Connect() bool {
 	r.dec.Decode(&ack)
 
 	if ack.RequestType != RequestTypeConnectionACK {
-		logger.Println("Did not receive acknowledgement from host", ack.OriginUUID)
+		logger.Printf("Did not receive acknowledgement from host %s (Received type %d)", ack.OriginUUID, ack.RequestType)
 		return false
 	}
 
@@ -86,29 +88,23 @@ func (r *RemoteInstance) Connect() bool {
 }
 
 func (r *RemoteInstance) SendRequest(req Request) {
-	if !r.connected {
-		fmt.Println("Error: Not connected to remote instance. (Yet trying to send a request)")
-		return
-	}
-
 	if err := r.enc.Encode(req); err != nil {
 		fmt.Println("Error encoding request:", err)
 	}
 }
 
-// Demo only
+func (r RemoteInstance) SetConnected(status bool) {
+	r.connected = status
+}
+
 func connectToRemoteInstances() {
-	remote := RemoteInstance{
-		UUID:          "Remotey",
-		DisplayName:   "Remotee",
-		RemoteAddress: "localhost:8333",
-	}
+	logger.Println("Info: Trying to connect to remote instances")
 
-	// Todo: mutex
-	local.remoteInstances = append(local.remoteInstances, &remote)
-
-	if remote.Connect() {
-		// avoid demo loop
-		//remote.HandleIncomingRequests()
+	for _, remote := range local.RemoteInstances {
+		if remote.Connect() {
+			remote.HandleIncomingRequests()
+		} else {
+			logger.Println("Error: Could not connect to", remote.UUID)
+		}
 	}
 }

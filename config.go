@@ -8,17 +8,16 @@ import (
 )
 
 type LocalInstance struct {
-	UUID                string
-	DisplayName         string
-	DataDir             string
-	RemoteInstanceUUIDs []string
-	SensorsUUIDs        []string
+	UUID            string
+	DisplayName     string
+	DataDir         string
+	SensorsUUIDs    []string
+	RemoteInstances map[string]RemoteInstance
 
-	keyPair         tls.Certificate
-	remoteInstances []*RemoteInstance
-	sensors         []*Sensor
-	config          *viper.Viper
-	authorizedKeys  *viper.Viper
+	keyPair        tls.Certificate
+	sensors        []*Sensor
+	config         *viper.Viper
+	authorizedKeys *viper.Viper
 }
 
 func readConfig() {
@@ -64,7 +63,7 @@ func readConfig() {
 	local.DisplayName = viper.GetString("DisplayName")
 	local.DataDir = viper.GetString("DataDir")
 
-	if err := viper.UnmarshalKey("RemoteInstances", &local.RemoteInstanceUUIDs); err != nil {
+	if err := viper.UnmarshalKey("RemoteInstances", &local.RemoteInstances); err != nil {
 		logger.Fatal(err)
 	}
 	if err := viper.UnmarshalKey("Sensors", &local.SensorsUUIDs); err != nil {
@@ -89,6 +88,7 @@ func readConfig() {
 func startSensors() {
 	// Read measurements
 	for _, sensorUUID := range local.SensorsUUIDs {
+		logger.Println("Trying to start sensor", sensorUUID)
 
 		// Prepare reading sensor data
 		reader := viper.New()
