@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"io"
 	"time"
 )
 
@@ -27,6 +28,13 @@ func (r *RemoteInstance) HandleIncomingRequests() {
 	for {
 		var req Request
 		if err := r.dec.Decode(&req); err != nil {
+			if err == io.EOF {
+				logger.Printf("Info: RemoteInstance: %s closed connection. No longer connected.", r.UUID)
+				r.connected = false
+
+				return
+			}
+
 			logger.Println("Error decoding request:", err)
 			continue
 		}
