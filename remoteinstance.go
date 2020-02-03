@@ -34,7 +34,9 @@ func (r *RemoteInstance) HandleIncomingRequests() {
 			}
 
 			logger.Println("Error decoding request:", err)
-			continue
+
+			// too harsh?
+			return
 		}
 
 		// Connection is already established and acknowledged, i.e.
