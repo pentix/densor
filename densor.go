@@ -118,7 +118,7 @@ func showDashboard() {
 
 func debug() {
 	for {
-		logger.Println(local.RemoteInstances, "\n\n\n")
+		//	logger.Println(local.RemoteInstances, "\n\n\n")
 		time.Sleep(2 * time.Second)
 	}
 }

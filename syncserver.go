@@ -43,7 +43,7 @@ func handleConn(conn net.Conn) {
 	}
 
 	// Create a remoteInstance for this connection
-	remote := RemoteInstance{
+	remoteToAppend := RemoteInstance{
 		UUID:          req.OriginUUID,
 		DisplayName:   req.Data["DisplayName"],
 		RemoteAddress: tlsConn.RemoteAddr().String(),
@@ -55,16 +55,37 @@ func handleConn(conn net.Conn) {
 
 	// Todo: Mutex
 	// Don't allow multiple connections with the same instance
-	found := false
+	var remote *RemoteInstance
 	for i, _ := range local.RemoteInstances {
 		if local.RemoteInstances[i].UUID == req.OriginUUID {
-			found = true
-			local.RemoteInstances[i].connected = true
+			if local.RemoteInstances[i].connected {
+				// If we are already connected to this instance, we reject this connection
+				enc.Encode(Request{
+					RequestType: RequestTypeConnectionNACK,
+					OriginUUID:  local.UUID,
+					Data:        map[string]string{},
+				})
+
+				tlsConn.Close()
+				return
+			}
+
+			// If we weren't connected before, replace the existing
+			// instance with the newly generated instance
+			local.RemoteInstances[i] = remoteToAppend
+			remote = &local.RemoteInstances[i]
 		}
 	}
 
-	if !found {
-		local.RemoteInstances = append(local.RemoteInstances, remote)
+	// If we didn't know this connection before, add it to our list
+	// (first time connection, UUID and Cert should already be in the authorizedKey file)
+	if remote == nil {
+		local.RemoteInstances = append(local.RemoteInstances, remoteToAppend)
+		remote = &local.RemoteInstances[len(local.RemoteInstances)-1]
+
+		// todo: mutex?
+		local.config.Set("RemoteInstances", local.RemoteInstances)
+		local.config.WriteConfig()
 	}
 
 	// Respond with ACK

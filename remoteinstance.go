@@ -29,7 +29,6 @@ func (r *RemoteInstance) HandleIncomingRequests() {
 		if err := r.dec.Decode(&req); err != nil {
 			if err == io.EOF {
 				logger.Printf("Info: RemoteInstance: %s closed connection. No longer connected.", r.UUID)
-				r.connected = false
 
 				return
 			}
@@ -91,10 +90,6 @@ func (r *RemoteInstance) Connect() bool {
 	logger.Println("Connected to", ack.OriginUUID)
 	r.connected = true
 
-	logger.Println("yeaaa boiii", r)
-	debug()
-	logger.Println("oof")
-
 	return true
 }
 
@@ -117,7 +112,8 @@ func connectToRemoteInstances() {
 	// todo: mutex
 	for i, _ := range local.RemoteInstances {
 		if local.RemoteInstances[i].Connect() {
-			local.RemoteInstances[i].HandleIncomingRequests()
+			// todo: use go
+			go local.RemoteInstances[i].HandleIncomingRequests()
 		} else {
 			logger.Println("Error: Could not connect to", local.RemoteInstances[i].UUID)
 		}

@@ -67,10 +67,6 @@ func readConfig() {
 		logger.Fatal(err)
 	}
 
-	logger.Println("GOT ", len(local.RemoteInstances), " remotessssss")
-	go debug()
-	logger.Println("GOT ", len(local.RemoteInstances), " remotessssss")
-
 	if err := viper.UnmarshalKey("Sensors", &local.SensorsUUIDs); err != nil {
 		logger.Fatal(err)
 	}
