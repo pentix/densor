@@ -42,6 +42,19 @@ func (r *RemoteInstance) HandleIncomingRequests() {
 		// Connection is already established and acknowledged, i.e.
 		// no RequestTypeConnectionAttempt and no RequestTypeConnectionACK
 		switch req.RequestType {
+		case RequestTypeGetSensorList:
+			logger.Printf("Info: RemoteInstance: %s asks for the sensor list", req.OriginUUID)
+			r.SendRequest(Request{
+				RequestType: RequestTypeAnswerSensorList,
+				OriginUUID:  local.UUID,
+				Data:        map[string]string{},
+			})
+
+			break
+
+		case RequestTypeAnswerSensorList:
+			logger.Printf("Info: RemoteInstance: %s answered with its sensors", req.OriginUUID)
+			break
 
 		default:
 			logger.Println("Error: Unexpected request type:", req.RequestType)
@@ -113,9 +126,18 @@ func connectToRemoteInstances() {
 
 	// todo: mutex
 	for i, _ := range local.RemoteInstances {
-		if local.RemoteInstances[i].Connect() {
-			// todo: use go
-			go local.RemoteInstances[i].HandleIncomingRequests()
+		currentRemote := &local.RemoteInstances[i]
+
+		if currentRemote.Connect() {
+			go currentRemote.HandleIncomingRequests()
+
+			// First thing to do once we're connected is to ask for the remote instance's sensors
+			currentRemote.SendRequest(Request{
+				RequestType: RequestTypeGetSensorList,
+				OriginUUID:  local.UUID,
+				Data:        map[string]string{},
+			})
+
 		} else {
 			logger.Println("Error: Could not connect to", local.RemoteInstances[i].UUID)
 		}
