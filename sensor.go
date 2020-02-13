@@ -82,7 +82,7 @@ func (s *Sensor) addMeasurement(measurement SensorMeasurement) {
 	s.NextMeasurement += 1
 
 	// Write to disk
-	s.sensorFile.Set("Sensor", s)
+	s.sensorFile.Set("Sensor", s) // todo mutex
 
 	/*s.sensorFile.Set("Sensor.Measurements", s.Measurements)
 	s.sensorFile.Set("Sensor.NextMeasurement", s.NextMeasurement)*/

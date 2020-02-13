@@ -89,7 +89,7 @@ func handleConn(conn net.Conn) {
 	}
 
 	// Respond with ACK
-	remote.SendRequest(Request{
+	remote.SendRequest(&Request{
 		RequestType: RequestTypeConnectionACK,
 		OriginUUID:  local.UUID,
 		Data:        map[string]string{"DisplayName": local.DisplayName},

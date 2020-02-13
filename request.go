@@ -17,3 +17,14 @@ type Request struct {
 	OriginUUID  string
 	Data        map[string]string
 }
+
+type SensorListEntry struct {
+	UUID            string
+	DisplayName     string
+	NextMeasurement int64
+}
+
+type SensorUpdateRequestEntry struct {
+	UUID                  string
+	startingAtMeasurement int64
+}
