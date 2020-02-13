@@ -64,7 +64,6 @@ func (r *RemoteInstance) HandleIncomingRequests() {
 				logger.Printf("Error: RemoteInstance: Could not collect sensor data requested by %s", req.OriginUUID)
 			}
 
-			logger.Println("<- &Request")
 			r.nextRequests <- &Request{
 				RequestType: RequestTypeAnswerSensorList,
 				OriginUUID:  local.UUID,
@@ -72,8 +71,6 @@ func (r *RemoteInstance) HandleIncomingRequests() {
 					"entries": string(enc),
 				},
 			}
-
-			logger.Println("was not blocking")
 
 			break
 
@@ -125,7 +122,6 @@ func (r *RemoteInstance) HandleIncomingRequests() {
 			}
 
 			// Request update for all sensors in requiresUpdate
-			logger.Println("GetSensorMEaaaas")
 			r.nextRequests <- &Request{
 				RequestType: RequestTypeGetSensorMeasurements,
 				OriginUUID:  local.UUID,
@@ -133,7 +129,6 @@ func (r *RemoteInstance) HandleIncomingRequests() {
 					"entries": string(enc),
 				},
 			}
-			logger.Println("not blocking")
 
 			break
 
@@ -210,13 +205,10 @@ func (r *RemoteInstance) MultiplexRequests() {
 	// Sleep until connection is ready and standard handshake collected some sync data
 	time.Sleep(500 * time.Millisecond)
 
-	logger.Println("now waiting for reqs <--------------------------------------")
 	for nextReq := range r.nextRequests {
 		logger.Println("Sending request:", nextReq)
 		r.SendRequest(nextReq)
 	}
-
-	logger.Println("This should not happen: Multiplexer")
 }
 
 func connectToRemoteInstances() {
@@ -235,13 +227,11 @@ func connectToRemoteInstances() {
 			go currentRemote.GeneratePeriodicRequests() // Activate periodic polling (heartbeats, etc.)
 
 			// First thing to do once we're connected is to ask for the remote instance's sensors
-			logger.Println("get sensor lisssstt")
 			currentRemote.nextRequests <- &Request{
 				RequestType: RequestTypeGetSensorList,
 				OriginUUID:  local.UUID,
 				Data:        map[string]string{},
 			}
-			logger.Println("not blokcing")
 
 		} else {
 			logger.Println("Error: Could not connect to", local.RemoteInstances[i].UUID)
