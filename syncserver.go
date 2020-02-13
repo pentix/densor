@@ -51,6 +51,7 @@ func handleConn(conn net.Conn) {
 		connected:     true,
 		enc:           enc,
 		dec:           dec,
+		nextRequests:  make(chan *Request, 2048),
 	}
 
 	// Todo: Mutex
@@ -103,6 +104,8 @@ func handleConn(conn net.Conn) {
 	wait and handle duplex requests
 	*/
 
+	go remote.MultiplexRequests()
+	go remote.GeneratePeriodicRequests()
 	remote.HandleIncomingRequests()
 }
 

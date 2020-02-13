@@ -210,6 +210,7 @@ func (r *RemoteInstance) MultiplexRequests() {
 	// Sleep until connection is ready and standard handshake collected some sync data
 	time.Sleep(500 * time.Millisecond)
 
+	logger.Println("now waiting for reqs <--------------------------------------")
 	for nextReq := range r.nextRequests {
 		logger.Println("Sending request:", nextReq)
 		r.SendRequest(nextReq)
