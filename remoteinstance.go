@@ -45,6 +45,7 @@ func (r *RemoteInstance) HandleIncomingRequests() {
 
 		// Connection is already established and acknowledged, i.e.
 		// no RequestTypeConnectionAttempt and no RequestTypeConnectionACK
+	RequestDestinction:
 		switch req.RequestType {
 		case RequestTypeGetSensorList:
 			logger.Printf("Info: RemoteInstance: %s asks for the sensor list", req.OriginUUID)
@@ -62,6 +63,7 @@ func (r *RemoteInstance) HandleIncomingRequests() {
 			enc, err := json.Marshal(entries)
 			if err != nil {
 				logger.Printf("Error: RemoteInstance: Could not collect sensor data requested by %s", req.OriginUUID)
+				break RequestDestinction
 			}
 
 			r.nextRequests <- &Request{
@@ -81,7 +83,8 @@ func (r *RemoteInstance) HandleIncomingRequests() {
 			err := json.Unmarshal([]byte(req.Data["entries"]), &entries)
 
 			if err != nil {
-				// todo handle
+				logger.Println("Error: RemoteInstance: Could not decode sensor list")
+				break RequestDestinction
 			}
 
 			requiresUpdate := make([]SensorUpdateRequestEntry, 0)
@@ -99,7 +102,7 @@ func (r *RemoteInstance) HandleIncomingRequests() {
 
 						requiresUpdate = append(requiresUpdate, SensorUpdateRequestEntry{
 							UUID:                  sensor.UUID,
-							StartingAtMeasurement: local.sensors[getSensorIndex(sensor.UUID)].NextMeasurement,
+							StartingAtMeasurement: local.sensors[local.GetSensorIndex(sensor.UUID)].NextMeasurement,
 						})
 
 						break
@@ -120,6 +123,7 @@ func (r *RemoteInstance) HandleIncomingRequests() {
 			enc, err := json.Marshal(requiresUpdate)
 			if err != nil {
 				logger.Println("Error: RemoteInstance: Could not encode required updates")
+				break RequestDestinction
 			}
 
 			// Request update for all sensors in requiresUpdate
@@ -137,7 +141,7 @@ func (r *RemoteInstance) HandleIncomingRequests() {
 			requestedMeasurements := make([]SensorUpdateRequestEntry, 0)
 			if err := json.Unmarshal([]byte(req.Data["entries"]), &requestedMeasurements); err != nil {
 				logger.Println("Error: RemoteInstance: Could not decode requested sensor measurements")
-				break
+				break RequestDestinction
 			}
 
 			logger.Printf("Info: RemoteInstance: Remote %s asked for %d sensor updates", req.OriginUUID, len(requestedMeasurements))
@@ -149,7 +153,7 @@ func (r *RemoteInstance) HandleIncomingRequests() {
 
 			for _, requestedPair := range requestedMeasurements {
 				// Collect requested updates
-				index := getSensorIndex(requestedPair.UUID)
+				index := local.GetSensorIndex(requestedPair.UUID)
 				if index < 0 || index >= len(local.sensors) {
 					logger.Println("Error: RemoteInstance: Invalid request for sensor", requestedPair.UUID)
 					break
@@ -161,7 +165,7 @@ func (r *RemoteInstance) HandleIncomingRequests() {
 						requestedPair.UUID,
 						requestedPair.StartingAtMeasurement)
 
-					break
+					break RequestDestinction
 				}
 
 				logger.Printf("Info: RemoteInstance: Collected %d measurements from sensor %s starting from %d up to %d",
@@ -184,6 +188,33 @@ func (r *RemoteInstance) HandleIncomingRequests() {
 				Data: map[string]string{
 					"collectedUpdates": string(enc),
 				},
+			}
+
+			break
+
+		case RequestTypeAnswerSensorMeasurements:
+
+			collectedUpdates := SensorUpdateList{}
+			if err := json.Unmarshal([]byte(req.Data["collectedUpdates"]), &collectedUpdates); err != nil {
+				logger.Println("Error: RemoteInstance: Could not decode collected updates")
+				break RequestDestinction
+			}
+
+			for UUID, measurements := range collectedUpdates.SensorMeasurements {
+				index := r.GetSensorIndex(UUID)
+				if index < 0 {
+					logger.Println("Error: RemoteInstance: Collected Updates: Invalid UUID provided:", UUID)
+					continue // Skip this sensor
+				}
+
+				for _, m := range measurements {
+					if m.MeasurementId != r.sensors[index].NextMeasurement {
+						logger.Println("Error: RemoteInstance: Collected updates are not in correct order")
+						break RequestDestinction
+					}
+
+					r.sensors[index].addMeasurement(m)
+				}
 			}
 
 			break
@@ -294,4 +325,14 @@ func connectToRemoteInstances() {
 			logger.Println("Error: Could not connect to", local.RemoteInstances[i].UUID)
 		}
 	}
+}
+
+func (r *RemoteInstance) GetSensorIndex(UUID string) int {
+	for i, s := range r.sensors {
+		if s.UUID == UUID {
+			return i
+		}
+	}
+
+	return -1
 }

@@ -136,8 +136,8 @@ func startSensors() {
 	select {}
 }
 
-func getSensorIndex(UUID string) int {
-	for i, s := range local.SensorsUUIDs {
+func (l *LocalInstance) GetSensorIndex(UUID string) int {
+	for i, s := range l.SensorsUUIDs {
 		if s == UUID {
 			return i
 		}
