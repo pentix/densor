@@ -132,8 +132,60 @@ func (r *RemoteInstance) HandleIncomingRequests() {
 
 			break
 
+		case RequestTypeGetSensorMeasurements:
+			requestedMeasurements := make([]SensorUpdateRequestEntry, 0)
+			if err := json.Unmarshal([]byte(req.Data["entries"]), &requestedMeasurements); err != nil {
+				logger.Println("Error: RemoteInstance: Could not decode requested sensor measurements")
+				break
+			}
+
+			logger.Printf("Info: RemoteInstance: Remote %s asked for %d sensor updates", req.OriginUUID, len(requestedMeasurements))
+
+			// Init sensor updates collection
+			collectedUpdates := SensorUpdateList{
+				SensorMeasurements: map[string][]SensorMeasurement{},
+			}
+
+			for _, requestedPair := range requestedMeasurements {
+				// Collect requested updates
+				index := getSensorIndex(requestedPair.UUID)
+				if index < 0 || index >= len(local.sensors) {
+					logger.Println("Error: RemoteInstance: Invalid request for sensor", requestedPair.UUID)
+					break
+				}
+
+				if requestedPair.startingAtMeasurement < 0 ||
+					requestedPair.startingAtMeasurement >= local.sensors[index].NextMeasurement {
+					logger.Printf("Error: RemoteInstance: Invalid request for sensor %s measurement %d",
+						requestedPair.UUID,
+						requestedPair.startingAtMeasurement)
+
+					break
+				}
+
+				logger.Printf("Info: RemoteInstance: Collected %d measurements from sensor %s", len(local.sensors[index].Measurements)-requestedPair.startingAtMeasurement, requestedPair.UUID)
+				collectedUpdates.SensorMeasurements[requestedPair.UUID] = local.sensors[index].Measurements[requestedPair.startingAtMeasurement:]
+			}
+
+			enc, err := json.Marshal(collectedUpdates)
+			if err != nil {
+				logger.Println("Error: RemoteInstance: Could not encode collected updates")
+				break
+			}
+
+			r.nextRequests <- &Request{
+				RequestType: RequestTypeAnswerSensorMeasurements,
+				OriginUUID:  local.UUID,
+				Data: map[string]string{
+					"collectedUpdates": string(enc),
+				},
+			}
+
+			break
+
 		default:
-			logger.Println("Error: Unexpected request type:", req.RequestType)
+			logger.Println("Error: RemoteInstance: Unexpected request type:", req.RequestType)
+			logger.Println("Error: RemoteInstance: Received request:", req)
 		}
 	}
 }

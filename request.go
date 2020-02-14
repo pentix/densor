@@ -21,10 +21,14 @@ type Request struct {
 type SensorListEntry struct {
 	UUID            string
 	DisplayName     string
-	NextMeasurement int64
+	NextMeasurement int
 }
 
 type SensorUpdateRequestEntry struct {
 	UUID                  string
-	startingAtMeasurement int64
+	startingAtMeasurement int
+}
+
+type SensorUpdateList struct {
+	SensorMeasurements map[string][]SensorMeasurement // Maps Sensor UUID -> Requested Sensor Measurements
 }

@@ -17,7 +17,7 @@ type Sensor struct {
 	UUID            string
 	DisplayName     string
 	Type            int
-	NextMeasurement int64
+	NextMeasurement int
 	Settings        map[string]interface{}
 	Measurements    []SensorMeasurement
 

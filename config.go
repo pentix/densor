@@ -135,3 +135,13 @@ func startSensors() {
 	// Wait forever, in an efficient manner
 	select {}
 }
+
+func getSensorIndex(UUID string) int {
+	for i, s := range local.SensorsUUIDs {
+		if s == UUID {
+			return i
+		}
+	}
+
+	return -1
+}
