@@ -26,7 +26,7 @@ type SensorListEntry struct {
 
 type SensorUpdateRequestEntry struct {
 	UUID                  string
-	startingAtMeasurement int
+	StartingAtMeasurement int
 }
 
 type SensorUpdateList struct {

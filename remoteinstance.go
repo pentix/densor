@@ -94,11 +94,12 @@ func (r *RemoteInstance) HandleIncomingRequests() {
 						// Check if we are up to date
 						if sensor.NextMeasurement == entry.NextMeasurement {
 							alreadyUpToDate = true
+							break
 						}
 
 						requiresUpdate = append(requiresUpdate, SensorUpdateRequestEntry{
 							UUID:                  sensor.UUID,
-							startingAtMeasurement: sensor.NextMeasurement,
+							StartingAtMeasurement: local.sensors[getSensorIndex(sensor.UUID)].NextMeasurement,
 						})
 
 						break
@@ -108,15 +109,15 @@ func (r *RemoteInstance) HandleIncomingRequests() {
 				if !alreadyUpToDate {
 					requiresUpdate = append(requiresUpdate, SensorUpdateRequestEntry{
 						UUID:                  entry.UUID,
-						startingAtMeasurement: 0,
+						StartingAtMeasurement: 0,
 					})
 				}
-
-				logger.Printf("Received %d sensors of which %d require an update or are unknown.", len(entries), len(requiresUpdate))
 			}
 
+			logger.Printf("Received %d sensors of which %d require an update or are unknown.", len(entries), len(requiresUpdate))
+
 			// Encode the entries manually
-			enc, err := json.Marshal(entries)
+			enc, err := json.Marshal(requiresUpdate)
 			if err != nil {
 				logger.Println("Error: RemoteInstance: Could not encode required updates")
 			}
@@ -154,17 +155,21 @@ func (r *RemoteInstance) HandleIncomingRequests() {
 					break
 				}
 
-				if requestedPair.startingAtMeasurement < 0 ||
-					requestedPair.startingAtMeasurement >= local.sensors[index].NextMeasurement {
+				if requestedPair.StartingAtMeasurement < 0 ||
+					requestedPair.StartingAtMeasurement >= local.sensors[index].NextMeasurement {
 					logger.Printf("Error: RemoteInstance: Invalid request for sensor %s measurement %d",
 						requestedPair.UUID,
-						requestedPair.startingAtMeasurement)
+						requestedPair.StartingAtMeasurement)
 
 					break
 				}
 
-				logger.Printf("Info: RemoteInstance: Collected %d measurements from sensor %s", len(local.sensors[index].Measurements)-requestedPair.startingAtMeasurement, requestedPair.UUID)
-				collectedUpdates.SensorMeasurements[requestedPair.UUID] = local.sensors[index].Measurements[requestedPair.startingAtMeasurement:]
+				logger.Printf("Info: RemoteInstance: Collected %d measurements from sensor %s starting from %d up to %d",
+					len(local.sensors[index].Measurements)-requestedPair.StartingAtMeasurement,
+					requestedPair.UUID,
+					requestedPair.StartingAtMeasurement,
+					len(local.sensors[index].Measurements))
+				collectedUpdates.SensorMeasurements[requestedPair.UUID] = local.sensors[index].Measurements[requestedPair.StartingAtMeasurement:]
 			}
 
 			enc, err := json.Marshal(collectedUpdates)
