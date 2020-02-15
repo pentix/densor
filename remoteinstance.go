@@ -235,8 +235,11 @@ func (r *RemoteInstance) HandleIncomingRequests() {
 						break RequestDestinction
 					}
 
-					r.sensors[index].addMeasurement(m)
+					r.sensors[index].addMeasurement(&m, true)
 				}
+
+				// "Commit" bulk transaction
+				r.sensors[index].addMeasurement(nil, true)
 			}
 
 			break

@@ -76,18 +76,20 @@ func (s *Sensor) sense() (SensorMeasurement, error) {
 	}
 }
 
-func (s *Sensor) addMeasurement(measurement SensorMeasurement) {
-	// Internal struct
-	s.Measurements = append(s.Measurements, measurement)
-	s.NextMeasurement += 1
+func (s *Sensor) addMeasurement(measurement *SensorMeasurement, bulkInsert bool) {
+	// Update internal struct if there is an actual measurement to be inserted
+	if measurement != nil {
+		s.Measurements = append(s.Measurements, *measurement)
+		s.NextMeasurement += 1
+	}
 
-	// Write to disk
-	s.sensorFile.Set("Sensor", s) // todo mutex
-
-	/*s.sensorFile.Set("Sensor.Measurements", s.Measurements)
-	s.sensorFile.Set("Sensor.NextMeasurement", s.NextMeasurement)*/
-	if err := s.sensorFile.WriteConfig(); err != nil {
-		logger.Println("Error: Writing measurement to disk failed:", err)
+	// If we bulkInsert a nil measurement this means we should write to viper/disk!
+	// If bulkInsert is false, we save every single entry directly to viper/disk
+	if !bulkInsert || (bulkInsert && measurement == nil) {
+		s.sensorFile.Set("Sensor", s) // todo mutex
+		if err := s.sensorFile.WriteConfig(); err != nil {
+			logger.Println("Error: Writing measurement to disk failed:", err)
+		}
 	}
 }
 
@@ -121,7 +123,7 @@ func (s *Sensor) enableMeasurements() {
 			logger.Printf("Error in sensor %s [%s]: %s", s.UUID, s.DisplayName, err)
 		}
 
-		s.addMeasurement(measurement)
+		s.addMeasurement(&measurement, false)
 		time.Sleep(period)
 	}
 }
