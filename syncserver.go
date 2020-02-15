@@ -47,6 +47,8 @@ func handleConn(conn net.Conn) {
 		UUID:          req.OriginUUID,
 		DisplayName:   req.Data["DisplayName"],
 		RemoteAddress: tlsConn.RemoteAddr().String(),
+		SensorUUIDs:   []string{},
+		sensors:       []*Sensor{},
 		tlsConn:       tlsConn,
 		connected:     true,
 		enc:           enc,

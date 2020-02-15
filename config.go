@@ -43,7 +43,7 @@ func readConfig() {
 	viper.SetDefault("DisplayName", "Host-"+UUID)
 	viper.SetDefault("DataDir", defaultDataDir)
 	viper.SetDefault("RemoteInstances", []RemoteInstance{})
-	viper.SetDefault("Sensors", []string{})
+	viper.SetDefault("sensors", []string{})
 
 	// Try to parse possible existing yaml file or create it
 	viper.SetConfigFile(configPath)
@@ -67,11 +67,32 @@ func readConfig() {
 		logger.Fatal(err)
 	}
 
-	if err := viper.UnmarshalKey("Sensors", &local.SensorsUUIDs); err != nil {
+	// Prepare sensor files
+	for i, _ := range local.RemoteInstances {
+		currentRemote := &local.RemoteInstances[i]
+
+		for i, uuid := range currentRemote.SensorUUIDs {
+			currentRemote.sensors = append(currentRemote.sensors, &Sensor{})
+
+			currentRemote.sensors[i].sensorFile = viper.New()
+			currentRemote.sensors[i].sensorFile.SetConfigFile(local.DataDir + uuid + ".json")
+			if err := currentRemote.sensors[i].sensorFile.ReadInConfig(); err != nil {
+				logger.Printf("Error: Config: Could read sensor file %s", uuid)
+				continue
+			}
+
+			if err := currentRemote.sensors[i].sensorFile.UnmarshalKey("Sensor", &currentRemote.sensors[i]); err != nil {
+				logger.Printf("Error: Config: Could not unmarshal sensor %s", uuid)
+				continue
+			}
+		}
+	}
+
+	if err := viper.UnmarshalKey("sensors", &local.SensorsUUIDs); err != nil {
 		logger.Fatal(err)
 	}
 
-	// Set viper instance for Sensors access
+	// Set viper instance for sensors access
 	local.config = viper.GetViper()
 
 	// Set viper instance for authorized keys
@@ -139,6 +160,16 @@ func startSensors() {
 func (l *LocalInstance) GetSensorIndex(UUID string) int {
 	for i, s := range l.SensorsUUIDs {
 		if s == UUID {
+			return i
+		}
+	}
+
+	return -1
+}
+
+func (l *LocalInstance) GetRemoteInstanceIndex(UUID string) int {
+	for i, r := range l.RemoteInstances {
+		if r.UUID == UUID {
 			return i
 		}
 	}

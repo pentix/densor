@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"github.com/spf13/viper"
 	"io"
 	"time"
 )
@@ -14,10 +15,9 @@ type RemoteInstance struct {
 	RemoteAddress string
 	SensorUUIDs   []string
 
-	tlsConn   *tls.Conn
-	connected bool
-	sensors   []*Sensor
-
+	sensors      []*Sensor
+	tlsConn      *tls.Conn
+	connected    bool
 	nextRequests chan *Request
 
 	enc *json.Encoder
@@ -38,8 +38,6 @@ func (r *RemoteInstance) HandleIncomingRequests() {
 			}
 
 			logger.Println("Error decoding request:", err)
-
-			// too harsh?
 			return
 		}
 
@@ -91,25 +89,30 @@ func (r *RemoteInstance) HandleIncomingRequests() {
 			for _, entry := range entries {
 
 				// Check if we already know the sensor
-				alreadyUpToDate := false
+				requireAllMeasurements := true
 				for _, sensor := range r.sensors {
 					if sensor.UUID == entry.UUID {
+						requireAllMeasurements = false
+
+						logger.Printf("Sensor:", sensor.UUID)
+						logger.Printf("Local DB: next measurement: %d    Remote entry: next measurement: %d", sensor.NextMeasurement, entry.NextMeasurement)
+
 						// Check if we are up to date
 						if sensor.NextMeasurement == entry.NextMeasurement {
-							alreadyUpToDate = true
 							break
 						}
 
+						// Not up-to-date, but we don't require the all measurements
 						requiresUpdate = append(requiresUpdate, SensorUpdateRequestEntry{
 							UUID:                  sensor.UUID,
-							StartingAtMeasurement: local.sensors[local.GetSensorIndex(sensor.UUID)].NextMeasurement,
+							StartingAtMeasurement: sensor.NextMeasurement,
 						})
 
 						break
 					}
 				}
 
-				if !alreadyUpToDate {
+				if requireAllMeasurements {
 					requiresUpdate = append(requiresUpdate, SensorUpdateRequestEntry{
 						UUID:                  entry.UUID,
 						StartingAtMeasurement: 0,
@@ -118,6 +121,7 @@ func (r *RemoteInstance) HandleIncomingRequests() {
 			}
 
 			logger.Printf("Received %d sensors of which %d require an update or are unknown.", len(entries), len(requiresUpdate))
+			logger.Printf("Request: %v", requiresUpdate)
 
 			// Encode the entries manually
 			enc, err := json.Marshal(requiresUpdate)
@@ -201,11 +205,29 @@ func (r *RemoteInstance) HandleIncomingRequests() {
 			}
 
 			for UUID, measurements := range collectedUpdates.SensorMeasurements {
+
+				// Create the sensor if it appears to be new
 				index := r.GetSensorIndex(UUID)
 				if index < 0 {
-					logger.Println("Error: RemoteInstance: Collected Updates: Invalid UUID provided:", UUID)
-					continue // Skip this sensor
+					logger.Printf("Info: RemoteInstance: Learned about sensor %s from remote %s", UUID, r.UUID)
+					r.AddSensor(&Sensor{
+						UUID:            UUID,
+						DisplayName:     "DemoDisplayName", // todo: fix
+						Type:            0,                 //todo: fix
+						NextMeasurement: 0,
+						Settings:        map[string]interface{}{},
+						Measurements:    []SensorMeasurement{},
+						sensorFile:      nil,
+					})
+
+					index = r.GetSensorIndex(UUID)
 				}
+
+				// Then start adding the measurements
+				logger.Printf("Info: RemoteInstance: Received update from sensor %s with %d measurements, starting at %d",
+					UUID,
+					len(measurements),
+					measurements[0].MeasurementId)
 
 				for _, m := range measurements {
 					if m.MeasurementId != r.sensors[index].NextMeasurement {
@@ -294,9 +316,25 @@ func (r *RemoteInstance) MultiplexRequests() {
 	time.Sleep(500 * time.Millisecond)
 
 	for nextReq := range r.nextRequests {
-		logger.Println("Sending request:", nextReq)
+		logger.Println("Sending request Type ", nextReq.RequestType)
 		r.SendRequest(nextReq)
 	}
+}
+
+func (r *RemoteInstance) AddSensor(sensor *Sensor) {
+	// todo: mutex
+
+	// Create measurements file
+	sensor.sensorFile = viper.New()
+	sensor.sensorFile.SetConfigFile(local.DataDir + sensor.UUID + ".json")
+	sensor.sensorFile.Set("Sensor", sensor)
+	sensor.sensorFile.WriteConfig()
+
+	// Add sensor to remote instances and save it
+	r.SensorUUIDs = append(r.SensorUUIDs, sensor.UUID)
+	r.sensors = append(r.sensors, sensor)
+	local.config.Set("RemoteInstances", local.RemoteInstances)
+	local.config.WriteConfig()
 }
 
 func connectToRemoteInstances() {
@@ -328,8 +366,8 @@ func connectToRemoteInstances() {
 }
 
 func (r *RemoteInstance) GetSensorIndex(UUID string) int {
-	for i, s := range r.sensors {
-		if s.UUID == UUID {
+	for i, s := range r.SensorUUIDs {
+		if s == UUID {
 			return i
 		}
 	}
