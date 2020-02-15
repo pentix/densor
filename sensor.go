@@ -120,7 +120,6 @@ func (s *Sensor) enableMeasurements() {
 		if err != nil {
 			measurement.Error = true
 			measurement.Data["ErrorMessage"] = fmt.Sprint(err)
-			logger.Printf("Error in sensor %s [%s]: %s", s.UUID, s.DisplayName, err)
 		}
 
 		s.addMeasurement(&measurement, false)
