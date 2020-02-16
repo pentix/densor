@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os/exec"
 	"reflect"
@@ -123,6 +124,27 @@ func (s *Sensor) enableMeasurements() {
 		}
 
 		s.addMeasurement(&measurement, false)
+
+		// Directly encode the measurement as an update and broadcast it to all connected remoteInstances
+		update := SensorUpdateList{
+			SensorMeasurements: map[string][]SensorMeasurement{s.UUID: []SensorMeasurement{
+				measurement,
+			}},
+		}
+
+		enc, err := json.Marshal(update)
+		if err != nil {
+			logger.Println("Error: Sensor: Failed when trying to create update broadcast")
+		}
+
+		BroadcastRequest(&Request{
+			RequestType: RequestTypeAnswerSensorMeasurements,
+			OriginUUID:  local.UUID,
+			Data: map[string]string{
+				"collectedUpdates": string(enc),
+			},
+		})
+
 		time.Sleep(period)
 	}
 }
