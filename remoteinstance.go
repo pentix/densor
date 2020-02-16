@@ -223,11 +223,13 @@ func (r *RemoteInstance) HandleIncomingRequests() {
 					index = r.GetSensorIndex(UUID)
 				}
 
-				// Then start adding the measurements
-				logger.Printf("Info: RemoteInstance: Received update from sensor %s with %d measurements, starting at %d",
-					UUID,
-					len(measurements),
-					measurements[0].MeasurementId)
+				// Then start adding the measurements (don't log single live updates)
+				if len(measurements) > 1 {
+					logger.Printf("Info: RemoteInstance: Received update from sensor %s with %d measurements, starting at %d",
+						UUID,
+						len(measurements),
+						measurements[0].MeasurementId)
+				}
 
 				for _, m := range measurements {
 					if m.MeasurementId != r.sensors[index].NextMeasurement {
@@ -319,7 +321,6 @@ func (r *RemoteInstance) MultiplexRequests() {
 	time.Sleep(500 * time.Millisecond)
 
 	for nextReq := range r.nextRequests {
-		logger.Println("Sending request Type ", nextReq.RequestType)
 		r.SendRequest(nextReq)
 	}
 }
