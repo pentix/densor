@@ -142,13 +142,13 @@ func (s *Sensor) enableMeasurements() {
 			logger.Println("Error: Sensor: Failed when trying to create update broadcast")
 		}
 
-		/*BroadcastRequest(&Request{
+		BroadcastRequest(&Request{
 			RequestType: RequestTypeAnswerSensorMeasurements,
 			OriginUUID:  local.UUID,
 			Data: map[string]string{
 				"collectedUpdates": string(enc),
 			},
-		})*/
+		})
 
 		time.Sleep(period)
 	}
