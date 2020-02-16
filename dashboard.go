@@ -15,6 +15,15 @@ func showDashboard() {
 
 	// Then ordered by remote instances
 	for _, remote := range local.RemoteInstances {
+
+		// todo: Design decision
+		/*
+			// Only try to read from connected instances
+			if !remote.connected {
+				continue
+			}
+		*/
+
 		for _, sensor := range remote.sensors {
 			printSensorStatus(remote.DisplayName, sensor)
 		}
@@ -39,13 +48,23 @@ func showDashboard() {
 func printSensorStatus(instanceDisplayName string, sensor *Sensor) {
 	var statusText string
 	var colorCode string
+	var lastUpdateTimestamp string
 
-	if sensor.lastUpdateStatus() {
-		statusText = "OK"
-		colorCode = "\033[32m"
+	if len(sensor.Measurements) > 0 {
+		if sensor.lastUpdateStatus() {
+			statusText = "OK"
+			colorCode = "\033[32m"
+		} else {
+			statusText = "FAIL"
+			colorCode = "\033[31m"
+		}
+
+		lastUpdateTimestamp = sensor.lastUpdateTimestamp()
+
 	} else {
-		statusText = "FAIL"
-		colorCode = "\033[31m"
+		colorCode = "\033[93m"
+		statusText = "SYNC"
+		lastUpdateTimestamp = "--"
 	}
 
 	fmt.Printf("%s%-35s      %-22s          %-4s       %s\033[0m\n",
@@ -53,7 +72,7 @@ func printSensorStatus(instanceDisplayName string, sensor *Sensor) {
 		instanceDisplayName,
 		sensor.DisplayName,
 		statusText,
-		sensor.lastUpdateTimestamp())
+		lastUpdateTimestamp)
 }
 
 func printRemoteInstanceStatus(remote *RemoteInstance) {

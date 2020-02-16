@@ -85,6 +85,8 @@ func readConfig() {
 				logger.Printf("Error: Config: Could not unmarshal sensor %s", uuid)
 				continue
 			}
+
+			logger.Println("Learned about sensor", currentRemote.sensors[i].UUID)
 		}
 	}
 

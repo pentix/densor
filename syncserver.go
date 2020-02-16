@@ -42,20 +42,6 @@ func handleConn(conn net.Conn) {
 		return
 	}
 
-	// Create a remoteInstance for this connection
-	remoteToAppend := RemoteInstance{
-		UUID:          req.OriginUUID,
-		DisplayName:   req.Data["DisplayName"],
-		RemoteAddress: tlsConn.RemoteAddr().String(),
-		SensorUUIDs:   []string{},
-		sensors:       []*Sensor{},
-		tlsConn:       tlsConn,
-		connected:     true,
-		enc:           enc,
-		dec:           dec,
-		nextRequests:  make(chan *Request, 2048),
-	}
-
 	// Todo: Mutex
 	// Don't allow multiple connections with the same instance
 	var remote *RemoteInstance
@@ -73,9 +59,14 @@ func handleConn(conn net.Conn) {
 				return
 			}
 
-			// If we weren't connected before, replace the existing
-			// instance with the newly generated instance
-			local.RemoteInstances[i] = remoteToAppend
+			// If we weren't connected before, complete the existing instance by adding
+			// the required instances / data structures
+			local.RemoteInstances[i].tlsConn = tlsConn
+			local.RemoteInstances[i].connected = true
+			local.RemoteInstances[i].enc = enc
+			local.RemoteInstances[i].dec = dec
+			local.RemoteInstances[i].nextRequests = make(chan *Request, 2048)
+
 			remote = &local.RemoteInstances[i]
 		}
 	}
@@ -83,6 +74,21 @@ func handleConn(conn net.Conn) {
 	// If we didn't know this connection before, add it to our list
 	// (first time connection, UUID and Cert should already be in the authorizedKey file)
 	if remote == nil {
+
+		// Create a remoteInstance for this connection
+		remoteToAppend := RemoteInstance{
+			UUID:          req.OriginUUID,
+			DisplayName:   req.Data["DisplayName"],
+			RemoteAddress: tlsConn.RemoteAddr().String(),
+			SensorUUIDs:   []string{},
+			sensors:       []*Sensor{},
+			tlsConn:       tlsConn,
+			connected:     true,
+			enc:           enc,
+			dec:           dec,
+			nextRequests:  make(chan *Request, 2048),
+		}
+
 		local.RemoteInstances = append(local.RemoteInstances, remoteToAppend)
 		remote = &local.RemoteInstances[len(local.RemoteInstances)-1]
 
@@ -108,6 +114,14 @@ func handleConn(conn net.Conn) {
 
 	go remote.MultiplexRequests()
 	go remote.GeneratePeriodicRequests()
+
+	// Ask for sensor updates
+	remote.nextRequests <- &Request{
+		RequestType: RequestTypeGetSensorList,
+		OriginUUID:  local.UUID,
+		Data:        map[string]string{},
+	}
+
 	remote.HandleIncomingRequests()
 }
 

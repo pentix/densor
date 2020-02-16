@@ -95,6 +95,8 @@ func (s *Sensor) addMeasurement(measurement *SensorMeasurement, bulkInsert bool)
 }
 
 func (s *Sensor) lastUpdateStatus() bool {
+	//return false
+
 	if s.Measurements[len(s.Measurements)-1].Error { // Todo take period into account (update should be new)
 		return false
 	}
@@ -102,6 +104,8 @@ func (s *Sensor) lastUpdateStatus() bool {
 }
 
 func (s *Sensor) lastUpdateTimestamp() string {
+	//return "date-da-da"
+
 	return s.Measurements[len(s.Measurements)-1].Timestamp[0:19]
 }
 
@@ -133,17 +137,18 @@ func (s *Sensor) enableMeasurements() {
 		}
 
 		enc, err := json.Marshal(update)
+		_ = enc
 		if err != nil {
 			logger.Println("Error: Sensor: Failed when trying to create update broadcast")
 		}
 
-		BroadcastRequest(&Request{
+		/*BroadcastRequest(&Request{
 			RequestType: RequestTypeAnswerSensorMeasurements,
 			OriginUUID:  local.UUID,
 			Data: map[string]string{
 				"collectedUpdates": string(enc),
 			},
-		})
+		})*/
 
 		time.Sleep(period)
 	}
