@@ -57,7 +57,7 @@ func (s *Sensor) sense() (SensorMeasurement, error) {
 		measurement := SensorMeasurement{
 			SensorUUID:    s.UUID,
 			MeasurementId: s.NextMeasurement,
-			Timestamp:     time.Now().String(),
+			Timestamp:     time.Now().Format(time.RFC3339Nano),
 			Error:         false,
 			Data:          make(map[string]interface{}),
 		}
@@ -95,17 +95,35 @@ func (s *Sensor) addMeasurement(measurement *SensorMeasurement, bulkInsert bool)
 }
 
 func (s *Sensor) lastUpdateStatus() bool {
-	//return false
-
-	if s.Measurements[len(s.Measurements)-1].Error { // Todo take period into account (update should be new)
+	if s.Measurements[len(s.Measurements)-1].Error {
 		return false
 	}
+
+	// If measurement should be periodic, check whether new updates arrived
+	if s.Type == SensorTypeBasic {
+		configuredPeriodStr := s.Settings["period"].(string)
+		configuredPeriod, err := time.ParseDuration(configuredPeriodStr)
+		if err != nil {
+			logger.Println("Error: Sensor: Could not parse measurement period")
+			return false
+		}
+
+		lastTimestamp, err := time.Parse(time.RFC3339, s.Measurements[len(s.Measurements)-1].Timestamp)
+		if err != nil {
+			logger.Println("Error: Sensor: Could not parse measurement timestamp")
+			return false
+		}
+
+		// 2 seconds "grace period" (for sync., etc.)
+		if time.Now().Sub(lastTimestamp) >= configuredPeriod+2*time.Second {
+			return false
+		}
+	}
+
 	return true
 }
 
 func (s *Sensor) lastUpdateTimestamp() string {
-	//return "date-da-da"
-
 	return s.Measurements[len(s.Measurements)-1].Timestamp[0:19]
 }
 
