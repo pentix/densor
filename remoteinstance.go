@@ -152,6 +152,7 @@ func (r *RemoteInstance) HandleIncomingRequests() {
 
 			// Init sensor updates collection
 			collectedUpdates := SensorUpdateList{
+				SensorMetadata:     map[string]Sensor{},
 				SensorMeasurements: map[string][]SensorMeasurement{},
 			}
 
@@ -177,10 +178,14 @@ func (r *RemoteInstance) HandleIncomingRequests() {
 					requestedPair.UUID,
 					requestedPair.StartingAtMeasurement,
 					len(local.sensors[index].Measurements))
+
+				sensorMetadata := *local.sensors[index]
+				sensorMetadata.Measurements = make([]SensorMeasurement, 0)
+				collectedUpdates.SensorMetadata[requestedPair.UUID] = sensorMetadata
 				collectedUpdates.SensorMeasurements[requestedPair.UUID] = local.sensors[index].Measurements[requestedPair.StartingAtMeasurement:]
 			}
 
-			enc, err := json.Marshal(collectedUpdates)
+			encUpdates, err := json.Marshal(collectedUpdates)
 			if err != nil {
 				logger.Println("Error: RemoteInstance: Could not encode collected updates")
 				break
@@ -190,7 +195,7 @@ func (r *RemoteInstance) HandleIncomingRequests() {
 				RequestType: RequestTypeAnswerSensorMeasurements,
 				OriginUUID:  local.UUID,
 				Data: map[string]string{
-					"collectedUpdates": string(enc),
+					"collectedUpdates": string(encUpdates),
 				},
 			}
 
@@ -204,23 +209,32 @@ func (r *RemoteInstance) HandleIncomingRequests() {
 				break RequestDestinction
 			}
 
+			SensorIndexInAnswer := 0
 			for UUID, measurements := range collectedUpdates.SensorMeasurements {
 
 				// Create the sensor if it appears to be new
 				index := r.GetSensorIndex(UUID)
 				if index < 0 {
 					logger.Printf("Info: RemoteInstance: Learned about sensor %s from remote %s", UUID, r.UUID)
+					sensorFile := viper.New()
+					sensorFile.SetConfigFile(local.DataDir + UUID + ".json")
 					r.AddSensor(&Sensor{
 						UUID:            UUID,
-						DisplayName:     "DemoDisplayName", // todo: fix
-						Type:            0,                 //todo: fix
+						DisplayName:     collectedUpdates.SensorMetadata[UUID].DisplayName,
+						Type:            collectedUpdates.SensorMetadata[UUID].Type,
 						NextMeasurement: 0,
-						Settings:        map[string]interface{}{},
+						Settings:        collectedUpdates.SensorMetadata[UUID].Settings,
 						Measurements:    []SensorMeasurement{},
-						sensorFile:      nil,
+						sensorFile:      sensorFile,
 					})
 
 					index = r.GetSensorIndex(UUID)
+				}
+
+				// Update DisplayName and settings if required and if possible (i.e. metadata is available)
+				if collectedUpdates.SensorMetadata != nil {
+					r.sensors[index].DisplayName = collectedUpdates.SensorMetadata[UUID].DisplayName
+					r.sensors[index].Settings = collectedUpdates.SensorMetadata[UUID].Settings
 				}
 
 				// Then start adding the measurements (don't log single live updates)
@@ -242,6 +256,8 @@ func (r *RemoteInstance) HandleIncomingRequests() {
 
 				// "Commit" bulk transaction
 				r.sensors[index].addMeasurement(nil, true)
+
+				SensorIndexInAnswer++
 			}
 
 			break

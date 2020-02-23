@@ -30,5 +30,6 @@ type SensorUpdateRequestEntry struct {
 }
 
 type SensorUpdateList struct {
+	SensorMetadata     map[string]Sensor              // Maps Sensor UUID -> Sensor meta data
 	SensorMeasurements map[string][]SensorMeasurement // Maps Sensor UUID -> Requested Sensor Measurements
 }
