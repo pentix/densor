@@ -94,9 +94,18 @@ func (s *Sensor) addMeasurement(measurement *SensorMeasurement, bulkInsert bool)
 	}
 }
 
-func (s *Sensor) lastUpdateStatus() bool {
+func (s *Sensor) lastUpdateStatus() int {
+	if len(s.Measurements) == 0 {
+		return SensorStatusSYNC
+	}
+
 	if s.Measurements[len(s.Measurements)-1].Error {
-		return false
+		return SensorStatusFAIL
+	}
+
+	// If we don't know the settings yet --> new status: SYNC
+	if s.Settings == nil {
+		return SensorStatusSYNC
 	}
 
 	// If measurement should be periodic, check whether new updates arrived
@@ -105,25 +114,29 @@ func (s *Sensor) lastUpdateStatus() bool {
 		configuredPeriod, err := time.ParseDuration(configuredPeriodStr)
 		if err != nil {
 			logger.Println("Error: Sensor: Could not parse measurement period")
-			return false
+			return SensorStatusSYNC
 		}
 
 		lastTimestamp, err := time.Parse(time.RFC3339, s.Measurements[len(s.Measurements)-1].Timestamp)
 		if err != nil {
 			logger.Println("Error: Sensor: Could not parse measurement timestamp")
-			return false
+			return SensorStatusSYNC
 		}
 
 		// 2 seconds "grace period" (for sync., etc.)
 		if time.Now().Sub(lastTimestamp) >= configuredPeriod+2*time.Second {
-			return false
+			return SensorStatusOLD
 		}
 	}
 
-	return true
+	return SensorStatusOK
 }
 
 func (s *Sensor) lastUpdateTimestamp() string {
+	if len(s.Measurements) == 0 {
+		return "--"
+	}
+
 	return s.Measurements[len(s.Measurements)-1].Timestamp[0:19]
 }
 
@@ -171,3 +184,10 @@ func (s *Sensor) enableMeasurements() {
 		time.Sleep(period)
 	}
 }
+
+const (
+	SensorStatusOK   = 1
+	SensorStatusFAIL = 2
+	SensorStatusOLD  = 3
+	SensorStatusSYNC = 4
+)

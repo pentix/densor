@@ -50,23 +50,26 @@ func printSensorStatus(instanceDisplayName string, sensor *Sensor) {
 	var colorCode string
 	var lastUpdateTimestamp string
 
-	if len(sensor.Measurements) > 0 {
-		if sensor.lastUpdateStatus() {
-			statusText = "OK"
-			colorCode = "\033[32m"
-		} else {
-			statusText = "FAIL"
-			colorCode = "\033[31m"
-		}
-
-		lastUpdateTimestamp = sensor.lastUpdateTimestamp()
-
-	} else {
+	status := sensor.lastUpdateStatus()
+	switch status {
+	case SensorStatusOK:
+		statusText = "OK"
+		colorCode = "\033[32m"
+		break
+	case SensorStatusFAIL:
+		statusText = "FAIL"
+		colorCode = "\033[31m"
+		break
+	case SensorStatusOLD:
+		statusText = "OLD"
+		colorCode = "\033[31m"
+		break
+	case SensorStatusSYNC:
 		colorCode = "\033[93m"
 		statusText = "SYNC"
-		lastUpdateTimestamp = "--"
 	}
 
+	lastUpdateTimestamp = sensor.lastUpdateTimestamp()
 	fmt.Printf("%s%-35s      %-22s          %-4s       %s\033[0m\n",
 		colorCode,
 		instanceDisplayName,
