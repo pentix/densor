@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/x509"
 	"fmt"
 	"log"
 	"os"
@@ -31,16 +32,20 @@ func main() {
 	logger = log.New(logfile, "", log.LstdFlags)
 	logger.Println("Starting densor...")
 	readConfig()
+	loadTLSCerts()
+	localCert, err := x509.ParseCertificate(local.keyPair.Certificate[0])
+	if err != nil {
+		logger.Fatal("Error parsing local certificate. Exiting.")
+	}
 
-	logger.Println("-----------------------------------------------------------------------------")
+	logger.Println("---------------------------------------------------------------------------------------------")
 	logger.Println("Number of remote instances: ", len(local.RemoteInstances))
 	logger.Println("Number of local sensors:    ", len(local.SensorsUUIDs))
 	logger.Println("Data Directory:             ", local.DataDir)
 	logger.Println("Instance UUID:              ", local.UUID)
 	logger.Println("Instance DisplayName:       ", local.DisplayName)
-	logger.Println("-----------------------------------------------------------------------------")
-
-	loadTLSCerts()
+	logger.Println("Instance TLS Certificate:   ", SHA256FromTLSCert(localCert))
+	logger.Println("---------------------------------------------------------------------------------------------")
 
 	go startSyncServer()
 	go connectToRemoteInstances()
