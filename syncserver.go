@@ -75,11 +75,13 @@ func handleConn(conn net.Conn) {
 	// (first time connection, UUID and Cert should already be in the authorizedKey file)
 	if remote == nil {
 
+		hostAddr, _, _ := net.SplitHostPort(tlsConn.RemoteAddr().String())
+
 		// Create a remoteInstance for this connection
 		remoteToAppend := RemoteInstance{
 			UUID:          req.OriginUUID,
 			DisplayName:   req.Data["DisplayName"],
-			RemoteAddress: tlsConn.RemoteAddr().String(),
+			RemoteAddress: hostAddr + ":8333",
 			SensorUUIDs:   []string{},
 			sensors:       []*Sensor{},
 			tlsConn:       tlsConn,
