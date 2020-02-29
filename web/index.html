@@ -1,0 +1,214 @@
+<html>
+
+<head>
+
+        <!-- Compiled and minified CSS -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+
+        <!-- Compiled and minified JavaScript -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+         
+
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+        <script>
+
+
+            document.addEventListener('DOMContentLoaded', function() {
+                var elems = document.querySelectorAll('.sidenav');
+                var instances = M.Sidenav.init(elems, {});
+            });
+
+                    
+        </script>
+
+        <style>
+                header, footer {
+                    padding-left: 300px;
+                }
+
+                main {
+                    padding-left: 330px;
+                }
+
+                @media only screen and (max-width : 992px) {
+                    header, main, footer {
+                        padding-left: 0;
+                    }
+                }
+        </style>
+</head>
+
+<body>
+ 
+<header>
+    <nav class="light-green lighten-1">
+        <ul id="nav-mobile" class="left ">
+            <li class="hide-on-large-only"><a href="#" data-target="slide-out" class="top-nav full sidenav-trigger"><i class="material-icons">menu</i></a></li>
+            <li><a href="sass.html">Overview</a></li>
+            <li><a href="badges.html">Statistics</a></li>
+            <li><a href="collapsible.html">Registered Actions</a></li>
+          </ul>
+        <span class="brand-logo right">
+            Densor
+        </span>
+    </nav>
+
+    </header>
+
+    <ul id="slide-out" class="sidenav sidenav-fixed">
+      <li>
+          <div style="padding: 1em;">
+            <div class="row valign-wrapper">
+                <div class="col s4"><i class="large material-icons">desktop_windows</i></div>
+                <div class="col s8" style="padding-left: 2em; line-height: 1.1em;">
+                  {{ .DisplayName }}<br>
+                  15 Sensors<br>
+                  7 Remote Instances
+                </div>
+            </div>
+          </div>
+      </li>
+    
+   
+
+
+      <li><div class="divider"></div></li>
+        <li><a class="subheader"><i class="material-icons">settings_input_antenna</i>Sensors</a></li>
+
+
+        
+      <li><div class="divider"></div></li>
+      <li><a class="subheader"><i class="material-icons">desktop_windows</i>Remote instances</a></li>
+
+      <li><div class="divider"></div></li>
+      <li><a class="subheader"><i class="material-icons">notifications_active</i>Actors and Notifications</a></li>
+
+      
+      <li><div class="divider"></div></li>
+      <li><a class="subheader">Settings</a></li>
+      <li><a href="#!"><i class="material-icons">settings</i>Local configuration</a></li>
+    </ul>
+
+       
+
+
+    <main>
+            <h2 class="green-text lighten-1"><i class="material-icons medium">settings_input_antenna</i> Operational</h2>
+
+        <!-- <li><a class="subheader">Search</a></li>
+        <form>
+        <div class="input-field">
+            <input id="search" type="search" required>
+            <label for="search"><i class="material-icons">search</i></label>
+            <i class="material-icons">close</i>
+        </div>
+        </form> -->
+
+
+    <!-- <li><div class="divider"></div></li> -->
+        <div class="row">
+            <div class="col s12 m12 l6 xl4">
+                <div class="card blue-grey darken-1">
+                    <div class="card-content white-text">
+                        <span class="card-title">Sensor 1</span>
+                        <p>I am a very simple card. I am good at containing small bits of information.
+                            I am convenient because I require little markup to use effectively.</p>
+                    </div>
+                    <div class="card-action">
+                        <a href="#">This is a link</a>
+                        <a href="#">This is a link</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col s12 m12 l6 xl4">
+                <div class="card blue-grey darken-1">
+                    <div class="card-content white-text">
+                        <span class="card-title">Sensor 1</span>
+                        <p>I am a very simple card. I am good at containing small bits of information.
+                            I am convenient because I require little markup to use effectively.</p>
+                    </div>
+                    <div class="card-action">
+                        <a href="#">This is a link</a>
+                        <a href="#">This is a link</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col s12 m12 l6 xl4">
+                <div class="card blue-grey darken-1">
+                    <div class="card-content white-text">
+                        <span class="card-title">Sensor 1</span>
+                        <p>I am a very simple card. I am good at containing small bits of information.
+                            I am convenient because I require little markup to use effectively.</p>
+                    </div>
+                    <div class="card-action">
+                        <a href="#">This is a link</a>
+                        <a href="#">This is a link</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col s12 m12 l6 xl4">
+                <div class="card blue-grey darken-1">
+                    <div class="card-content white-text">
+                        <span class="card-title">Sensor 1</span>
+                        <p>I am a very simple card. I am good at containing small bits of information.
+                            I am convenient because I require little markup to use effectively.</p>
+                    </div>
+                    <div class="card-action">
+                        <a href="#">This is a link</a>
+                        <a href="#">This is a link</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col s12 m12 l6 xl4">
+                <div class="card blue-grey darken-1">
+                    <div class="card-content white-text">
+                        <span class="card-title">Sensor 1</span>
+                        <p>I am a very simple card. I am good at containing small bits of information.
+                            I am convenient because I require little markup to use effectively.</p>
+                    </div>
+                    <div class="card-action">
+                        <a href="#">This is a link</a>
+                        <a href="#">This is a link</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col s12 m12 l6 xl4">
+                <div class="card blue-grey darken-1">
+                    <div class="card-content white-text">
+                        <span class="card-title">Sensor 1</span>
+                        <p>I am a very simple card. I am good at containing small bits of information.
+                            I am convenient because I require little markup to use effectively.</p>
+                    </div>
+                    <div class="card-action">
+                        <a href="#">This is a link</a>
+                        <a href="#">This is a link</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <table>
+        <tbody>
+          <tr>
+            <td>Densor</td>
+            <td>1.0.0</td>
+          </tr>
+          <tr>
+            <td>Instance UUID</td>
+            <td>{{ .UUID }}</td>
+          </tr>
+          <tr>
+            <td>Sensors</td>
+            <td>{{ .Sensors }}</td>
+          </tr>
+          <tr>
+            <td>Remote Instances</td>
+            <td>7</td>
+          </tr>
+        </tbody>
+      </table>
+    </main>
+</body>
+
+</html>

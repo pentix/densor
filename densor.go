@@ -47,15 +47,16 @@ func main() {
 	logger.Println("Instance TLS Certificate:   ", SHA256FromTLSCert(localCert))
 	logger.Println("---------------------------------------------------------------------------------------------")
 
-	go startSyncServer()
-	go connectToRemoteInstances()
-	go startSensors()
+	go StartWebInterface()
+	//go startSyncServer()
+	//go connectToRemoteInstances()
+	//go startSensors()
 
 	go debug()
 
 	// if  --dashboard  show dashboard
 	for {
-		showDashboard()
+		//showDashboard()
 		time.Sleep(1 * time.Second)
 	}
 
