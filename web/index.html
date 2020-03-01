@@ -14,14 +14,102 @@
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
         <script>
-
-
+            // GUI / MaterializeCSS
             document.addEventListener('DOMContentLoaded', function() {
                 var elems = document.querySelectorAll('.sidenav');
                 var instances = M.Sidenav.init(elems, {});
             });
 
-                    
+
+
+
+            // Debug
+            let req = {RequestType: 1, Data: "Test1234"};
+            let s = JSON.stringify(req);
+
+            let req2 = {RequestType: 3};
+            let s2 = JSON.stringify(req2);
+
+            // Dashboard
+            let Sensors = [];
+            let RemoteInstances = [];
+            let NameFromUUID = {"{{ .UUID }}": "{{ .DisplayName }}"};
+            let SensorStatus = ["", "OK", "FAIL", "OLD", "SYNC"];
+
+            // Protocol Implementation
+            const WEB_API_REQUEST_DASHBOARD = 1;
+            const WEB_API_ANSWER_DASHBOARD = 2;
+
+            function getColorCodeFromStatus(s) {
+                switch(s) {
+                    case 1:
+                    case true:
+                        return "light-green lighten-4";
+                    case 2:
+                    case false:
+                        return "red lighten-4";
+                    case 3:
+                        return "red lighten-4";
+                    case 4:
+                        return "orange lighten-3";
+
+                }
+            }
+
+            function updateDashboard() {
+                let dashboardSensors = document.getElementById("dashboard.sensors");
+                dashboardSensors.innerHTML = "";
+
+                let dashboardRemotes = document.getElementById("dashboard.remotes");
+                dashboardRemotes.innerHTML = "";
+
+                for (let i=0; i<RemoteInstances.length; i++) {
+                    let r = RemoteInstances[i];
+                    NameFromUUID[r["UUID"]] = r["DisplayName"];
+
+                    let c = "";
+                    if(r["Connected"]){
+                        c = "<i class=\"material-icons\">link</i>";
+                    } else {
+                        c = "<i class=\"material-icons\">link_off</i>";
+                    }
+
+                    dashboardRemotes.innerHTML += '<tr class="' + getColorCodeFromStatus(r["Connected"]) + '"><td>'
+                        + r["DisplayName"] + "</td><td>" + c + "</td></tr>";
+                }
+
+                for (let i=0; i<Sensors.length; i++) {
+                    let s = Sensors[i];
+                    NameFromUUID[Sensors[i]["UUID"]] = Sensors[i]["DisplayName"];
+                    dashboardSensors.innerHTML += '<tr class="' + getColorCodeFromStatus(s["LastUpdateStatus"]) + '">' +
+                        "<td>" + NameFromUUID[s["InstanceUUID"]] +
+                        "</td><td>" + s["DisplayName"] + "</td><td>" + SensorStatus[s["LastUpdateStatus"]] +
+                        "</td><td>" + s["LastUpdateTime"] + "</td></tr>";
+                }
+
+
+            }
+
+            ws = new WebSocket("wss://" + location.hostname + ":8334/api");
+            ws.onmessage = function (evt) {
+                let response = JSON.parse(evt.data);
+                console.log(response);
+                switch (response.RequestType) {
+                    case 2:
+                        Sensors = response["Sensors"];
+                        updateDashboard();
+                        break;
+
+                    case 4:
+                        RemoteInstances = response["RemoteInstances"];
+                        updateDashboard();
+                }
+            };
+
+            ws.onerror = function (evt) {
+                console.log("error:" + evt.data);
+            };
+
         </script>
 
         <style>
@@ -84,6 +172,9 @@
       <li><a class="subheader"><i class="material-icons">desktop_windows</i>Remote instances</a></li>
 
       <li><div class="divider"></div></li>
+      <li><a class="subheader"><i class="material-icons">timeline</i>Analytics and Charts</a></li>
+
+      <li><div class="divider"></div></li>
       <li><a class="subheader"><i class="material-icons">notifications_active</i>Actors and Notifications</a></li>
 
       
@@ -98,6 +189,10 @@
     <main>
             <h2 class="green-text lighten-1"><i class="material-icons medium">settings_input_antenna</i> Operational</h2>
 
+        <a href="javascript:ws.send(s);" class="waves-effect waves-light btn"><i class="material-icons left">cloud</i>Get Sensors</a>
+        <a href="javascript:ws.send(s2);" class="waves-effect waves-light btn"><i class="material-icons left">cloud</i>Get Remote Instances</a>
+
+
         <!-- <li><a class="subheader">Search</a></li>
         <form>
         <div class="input-field">
@@ -107,6 +202,39 @@
         </div>
         </form> -->
 
+        <div class="row">
+            <div class="col m12 l12">
+                <table class="responsive-table">
+                    <thead>
+                    <tr>
+                        <th>Instance</th>
+                        <th>Sensor</th>
+                        <th>Status</th>
+                        <th>Last Update</th>
+                    </tr>
+                    </thead>
+                    <tbody id="dashboard.sensors">
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col m12 l12">
+                <table class="responsive-table">
+                    <thead>
+                    <tr>
+                        <th>Instance</th>
+                        <th>Connected</th>
+                    </tr>
+                    </thead>
+                    <tbody id="dashboard.remotes">
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
     <!-- <li><div class="divider"></div></li> -->
         <div class="row">
@@ -190,26 +318,6 @@
             </div>
         </div>
 
-    <table>
-        <tbody>
-          <tr>
-            <td>Densor</td>
-            <td>1.0.0</td>
-          </tr>
-          <tr>
-            <td>Instance UUID</td>
-            <td>{{ .UUID }}</td>
-          </tr>
-          <tr>
-            <td>Sensors</td>
-            <td>{{ .Sensors }}</td>
-          </tr>
-          <tr>
-            <td>Remote Instances</td>
-            <td>7</td>
-          </tr>
-        </tbody>
-      </table>
     </main>
 </body>
 
