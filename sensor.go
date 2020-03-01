@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os/exec"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/spf13/viper"
@@ -137,7 +138,7 @@ func (s *Sensor) lastUpdateTimestamp() string {
 		return "--"
 	}
 
-	return s.Measurements[len(s.Measurements)-1].Timestamp[0:19]
+	return strings.Replace(s.Measurements[len(s.Measurements)-1].Timestamp[0:19], "T", " ", 1)
 }
 
 // Will run in an infinite loop, supposed to run as own goroutine

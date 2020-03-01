@@ -61,7 +61,7 @@
                     }
 
                     dashboardRemotes.innerHTML += '<tr class="' + getColorCodeFromStatus(r["Connected"]) + '"><td>'
-                        + r["DisplayName"] + "</td><td>" + c + "</td></tr>";
+                        + r["DisplayName"] +  '</td><td class="center-align">' + c + "</td></tr>";
                 }
 
                 for (let i=0; i<Sensors.length; i++) {
@@ -191,23 +191,10 @@
 
 
     <main>
-            <h2 class="green-text lighten-1"><i class="material-icons medium">settings_input_antenna</i> Operational</h2>
-
-        <a href="javascript:ws.send(s);" class="waves-effect waves-light btn"><i class="material-icons left">cloud</i>Get Sensors</a>
-        <a href="javascript:ws.send(s2);" class="waves-effect waves-light btn"><i class="material-icons left">cloud</i>Get Remote Instances</a>
-
-
-        <!-- <li><a class="subheader">Search</a></li>
-        <form>
-        <div class="input-field">
-            <input id="search" type="search" required>
-            <label for="search"><i class="material-icons">search</i></label>
-            <i class="material-icons">close</i>
-        </div>
-        </form> -->
+            <h2 class="green-text lighten-1"><i class="material-icons medium">settings_input_antenna</i> Dashboard</h2>
 
         <div class="row">
-            <div class="col m12 l12">
+            <div class="col l12 xl9">
                 <table class="responsive-table">
                     <thead>
                     <tr>
@@ -225,12 +212,12 @@
         </div>
 
         <div class="row">
-            <div class="col m12 l12">
+            <div class="col l12 xl6">
                 <table class="responsive-table">
                     <thead>
                     <tr>
                         <th>Instance</th>
-                        <th>Connected</th>
+                        <th class="center-align">Connected</th>
                     </tr>
                     </thead>
                     <tbody id="dashboard.remotes">
@@ -239,89 +226,6 @@
                 </table>
             </div>
         </div>
-
-    <!-- <li><div class="divider"></div></li> -->
-        <div class="row">
-            <div class="col s12 m12 l6 xl4">
-                <div class="card blue-grey darken-1">
-                    <div class="card-content white-text">
-                        <span class="card-title">Sensor 1</span>
-                        <p>I am a very simple card. I am good at containing small bits of information.
-                            I am convenient because I require little markup to use effectively.</p>
-                    </div>
-                    <div class="card-action">
-                        <a href="#">This is a link</a>
-                        <a href="#">This is a link</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col s12 m12 l6 xl4">
-                <div class="card blue-grey darken-1">
-                    <div class="card-content white-text">
-                        <span class="card-title">Sensor 1</span>
-                        <p>I am a very simple card. I am good at containing small bits of information.
-                            I am convenient because I require little markup to use effectively.</p>
-                    </div>
-                    <div class="card-action">
-                        <a href="#">This is a link</a>
-                        <a href="#">This is a link</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col s12 m12 l6 xl4">
-                <div class="card blue-grey darken-1">
-                    <div class="card-content white-text">
-                        <span class="card-title">Sensor 1</span>
-                        <p>I am a very simple card. I am good at containing small bits of information.
-                            I am convenient because I require little markup to use effectively.</p>
-                    </div>
-                    <div class="card-action">
-                        <a href="#">This is a link</a>
-                        <a href="#">This is a link</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col s12 m12 l6 xl4">
-                <div class="card blue-grey darken-1">
-                    <div class="card-content white-text">
-                        <span class="card-title">Sensor 1</span>
-                        <p>I am a very simple card. I am good at containing small bits of information.
-                            I am convenient because I require little markup to use effectively.</p>
-                    </div>
-                    <div class="card-action">
-                        <a href="#">This is a link</a>
-                        <a href="#">This is a link</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col s12 m12 l6 xl4">
-                <div class="card blue-grey darken-1">
-                    <div class="card-content white-text">
-                        <span class="card-title">Sensor 1</span>
-                        <p>I am a very simple card. I am good at containing small bits of information.
-                            I am convenient because I require little markup to use effectively.</p>
-                    </div>
-                    <div class="card-action">
-                        <a href="#">This is a link</a>
-                        <a href="#">This is a link</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col s12 m12 l6 xl4">
-                <div class="card blue-grey darken-1">
-                    <div class="card-content white-text">
-                        <span class="card-title">Sensor 1</span>
-                        <p>I am a very simple card. I am good at containing small bits of information.
-                            I am convenient because I require little markup to use effectively.</p>
-                    </div>
-                    <div class="card-action">
-                        <a href="#">This is a link</a>
-                        <a href="#">This is a link</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
     </main>
 </body>
 
