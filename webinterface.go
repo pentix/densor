@@ -2,7 +2,6 @@ package main
 
 import (
 	"html/template"
-	"io"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -53,7 +52,7 @@ func WebAPI(w http.ResponseWriter, req *http.Request) {
 	for {
 		err := c.ReadJSON(&apiReq) // todo mutex
 		if err != nil {
-			if err == io.EOF {
+			if err == websocket.ErrCloseSent {
 				return
 			}
 
@@ -169,10 +168,12 @@ func WebAPIBroadcastRemoteInstances() {
 }
 
 func WebAPIBroadcast() {
-	req := <-WebAPIBroadcastQueue
+	for {
+		req := <-WebAPIBroadcastQueue
 
-	// todo: mutex
-	for _, c := range WebAPIBroadcastSockets {
-		c.WriteJSON(req)
+		// todo: mutex
+		for _, c := range WebAPIBroadcastSockets {
+			c.WriteJSON(req)
+		}
 	}
 }

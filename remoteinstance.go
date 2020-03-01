@@ -325,6 +325,9 @@ func (r *RemoteInstance) Disconnect() {
 	r.tlsConn.Close()
 	r.connected = false
 
+	// Notify UI
+	WebAPIBroadcastRemoteInstances()
+
 	logger.Println("Info: RemoteInstance: Disconnected from", r.UUID)
 }
 
