@@ -39,6 +39,7 @@ func handleConn(conn net.Conn) {
 
 	// Now verify the identity
 	if !matchesAuthorizedKey(req.OriginUUID, sha256Sum) {
+		logger.Println("Info: SyncServer: Rejecting connection due to unauthorized key")
 		return
 	}
 
@@ -113,6 +114,9 @@ func handleConn(conn net.Conn) {
 	Since we established connection, we can now
 	wait and handle duplex requests
 	*/
+
+	// Notify UI
+	WebAPIBroadcastRemoteInstances()
 
 	go remote.MultiplexRequests()
 	go remote.GeneratePeriodicRequests()

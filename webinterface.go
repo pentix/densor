@@ -2,6 +2,7 @@ package main
 
 import (
 	"html/template"
+	"io"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -11,6 +12,7 @@ func StartWebInterface() {
 	http.HandleFunc("/", WebUIRoot)
 	http.HandleFunc("/api", WebAPI)
 
+	go WebAPIBroadcast()
 	http.ListenAndServeTLS("0.0.0.0:8334", local.DataDir+"cert.pem", local.DataDir+"key.pem", nil)
 }
 
@@ -43,43 +45,25 @@ func WebAPI(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	logger.Println("Info: Web Interface: Opening API Connection")
-	defer logger.Println("Info: Web Interface: Closed API Connection")
+	WebAPIRegisterSocket(c)
+	defer WebAPIUnregisterSocket(c)
 	defer c.Close()
 
 	apiReq := new(WebAPIRequest)
 	for {
-		err := c.ReadJSON(&apiReq)
+		err := c.ReadJSON(&apiReq) // todo mutex
 		if err != nil {
+			if err == io.EOF {
+				return
+			}
+
 			logger.Println("Info: Web Interface: Could not decode request:", err)
 			continue
 		}
 
 		switch apiReq.RequestType {
 		case WebAPIRequestSensorList:
-			sensorData := make([]map[string]interface{}, 0)
-
-			for _, s := range local.sensors {
-				sensorData = append(sensorData, map[string]interface{}{
-					"UUID":             s.UUID,
-					"InstanceUUID":     local.UUID,
-					"DisplayName":      s.DisplayName,
-					"LastUpdateTime":   s.lastUpdateTimestamp(),
-					"LastUpdateStatus": s.lastUpdateStatus(),
-				})
-			}
-
-			for _, r := range local.RemoteInstances {
-				for _, s := range r.sensors {
-					sensorData = append(sensorData, map[string]interface{}{
-						"UUID":             s.UUID,
-						"InstanceUUID":     r.UUID,
-						"DisplayName":      s.DisplayName,
-						"LastUpdateTime":   s.lastUpdateTimestamp(),
-						"LastUpdateStatus": s.lastUpdateStatus(),
-					})
-				}
-			}
+			sensorData := WebAPICollectSensors()
 
 			c.WriteJSON(map[string]interface{}{
 				"RequestType": WebAPIAnswerSensorList,
@@ -88,22 +72,107 @@ func WebAPI(w http.ResponseWriter, req *http.Request) {
 			break
 
 		case WebAPIRequestRemoteInstanceList:
-			remotesData := make([]map[string]interface{}, 0)
-			for _, r := range local.RemoteInstances {
-				remotesData = append(remotesData, map[string]interface{}{
-					"UUID":        r.UUID,
-					"DisplayName": r.DisplayName,
-					"Sensors":     r.SensorUUIDs,
-					"Connected":   r.connected,
-				})
-			}
+			remotesData := WebAPICollectRemoteInstances()
 
 			c.WriteJSON(map[string]interface{}{
 				"RequestType":     WebAPIAnswerRemoteInstanceList,
 				"RemoteInstances": remotesData,
 			})
 			break
-
 		}
+	}
+}
+
+var WebAPIBroadcastSockets = make([]*websocket.Conn, 0)
+var WebAPIBroadcastQueue = make(chan map[string]interface{}, 1024)
+
+func WebAPIRegisterSocket(c *websocket.Conn) {
+	// todo: mutex
+	WebAPIBroadcastSockets = append(WebAPIBroadcastSockets, c)
+	logger.Println("Info: Web Interface: Opening API Socket")
+}
+
+func WebAPIUnregisterSocket(conn *websocket.Conn) {
+	// todo: mutex
+	pos := -1
+	for i, c := range WebAPIBroadcastSockets {
+		if c == conn {
+			pos = i
+			break
+		}
+	}
+
+	if pos != -1 {
+		WebAPIBroadcastSockets = append(WebAPIBroadcastSockets[:pos], WebAPIBroadcastSockets[(pos+1):]...)
+	}
+
+	logger.Println("Info: Web Interface: Closed API Socket")
+}
+
+func WebAPICollectSensors() []map[string]interface{} {
+	// todo: mutex
+
+	sensorData := make([]map[string]interface{}, 0)
+	for _, s := range local.sensors {
+		sensorData = append(sensorData, map[string]interface{}{
+			"UUID":             s.UUID,
+			"InstanceUUID":     local.UUID,
+			"DisplayName":      s.DisplayName,
+			"LastUpdateTime":   s.lastUpdateTimestamp(),
+			"LastUpdateStatus": s.lastUpdateStatus(),
+		})
+	}
+
+	for _, r := range local.RemoteInstances {
+		for _, s := range r.sensors {
+			sensorData = append(sensorData, map[string]interface{}{
+				"UUID":             s.UUID,
+				"InstanceUUID":     r.UUID,
+				"DisplayName":      s.DisplayName,
+				"LastUpdateTime":   s.lastUpdateTimestamp(),
+				"LastUpdateStatus": s.lastUpdateStatus(),
+			})
+		}
+	}
+
+	return sensorData
+}
+
+func WebAPIBroadcastSensors() {
+	WebAPIBroadcastQueue <- map[string]interface{}{
+		"RequestType": WebAPIAnswerSensorList,
+		"Sensors":     WebAPICollectSensors(),
+	}
+}
+
+func WebAPICollectRemoteInstances() []map[string]interface{} {
+	// todo: mutex
+
+	remotesData := make([]map[string]interface{}, 0)
+	for _, r := range local.RemoteInstances {
+		remotesData = append(remotesData, map[string]interface{}{
+			"UUID":        r.UUID,
+			"DisplayName": r.DisplayName,
+			"Sensors":     r.SensorUUIDs,
+			"Connected":   r.connected,
+		})
+	}
+
+	return remotesData
+}
+
+func WebAPIBroadcastRemoteInstances() {
+	WebAPIBroadcastQueue <- map[string]interface{}{
+		"RequestType":     WebAPIAnswerRemoteInstanceList,
+		"RemoteInstances": WebAPICollectRemoteInstances(),
+	}
+}
+
+func WebAPIBroadcast() {
+	req := <-WebAPIBroadcastQueue
+
+	// todo: mutex
+	for _, c := range WebAPIBroadcastSockets {
+		c.WriteJSON(req)
 	}
 }

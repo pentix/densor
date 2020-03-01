@@ -14,22 +14,6 @@
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
         <script>
-            // GUI / MaterializeCSS
-            document.addEventListener('DOMContentLoaded', function() {
-                var elems = document.querySelectorAll('.sidenav');
-                var instances = M.Sidenav.init(elems, {});
-            });
-
-
-
-
-            // Debug
-            let req = {RequestType: 1, Data: "Test1234"};
-            let s = JSON.stringify(req);
-
-            let req2 = {RequestType: 3};
-            let s2 = JSON.stringify(req2);
-
             // Dashboard
             let Sensors = [];
             let RemoteInstances = [];
@@ -37,8 +21,10 @@
             let SensorStatus = ["", "OK", "FAIL", "OLD", "SYNC"];
 
             // Protocol Implementation
-            const WEB_API_REQUEST_DASHBOARD = 1;
-            const WEB_API_ANSWER_DASHBOARD = 2;
+            const WebAPIRequestSensorList         = 1;
+            const WebAPIAnswerSensorList          = 2;
+            const WebAPIRequestRemoteInstanceList = 3;
+            const WebAPIAnswerRemoteInstanceList  = 4;
 
             function getColorCodeFromStatus(s) {
                 switch(s) {
@@ -106,11 +92,29 @@
                 }
             };
 
+            // Log WebSocket errors
             ws.onerror = function (evt) {
-                console.log("error:" + evt.data);
+                console.log("WebSocket error: " + evt.data);
             };
 
-        </script>
+            // Load initial dashboard data as soon as the socket is ready
+            ws.onopen = function (evt) {
+                let req = {RequestType: WebAPIRequestRemoteInstanceList};
+                ws.send(JSON.stringify(req));
+
+                let req2 = {RequestType: WebAPIRequestSensorList};
+                ws.send(JSON.stringify(req2));
+            };
+
+
+            document.addEventListener('DOMContentLoaded', function() {
+                // GUI / MaterializeCSS
+                var elems = document.querySelectorAll('.sidenav');
+                var instances = M.Sidenav.init(elems, {});
+            });
+         </script>
+
+
 
         <style>
                 header, footer {

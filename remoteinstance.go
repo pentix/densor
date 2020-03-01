@@ -260,6 +260,9 @@ func (r *RemoteInstance) HandleIncomingRequests() {
 				SensorIndexInAnswer++
 			}
 
+			// Notify UI
+			WebAPIBroadcastSensors()
+
 			break
 
 		default:
@@ -311,6 +314,9 @@ func (r *RemoteInstance) Connect() bool {
 
 	logger.Println("Connected to", ack.OriginUUID)
 	r.connected = true
+
+	// Notify UI
+	WebAPIBroadcastRemoteInstances()
 
 	return true
 }

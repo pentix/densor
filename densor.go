@@ -48,9 +48,9 @@ func main() {
 	logger.Println("---------------------------------------------------------------------------------------------")
 
 	go StartWebInterface()
-	//go startSyncServer()
-	//go connectToRemoteInstances()
-	//go startSensors()
+	go startSyncServer()
+	go connectToRemoteInstances()
+	go startSensors()
 
 	go debug()
 
