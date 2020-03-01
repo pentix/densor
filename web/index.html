@@ -107,10 +107,11 @@
             };
 
 
+            let sideNav = null;
             document.addEventListener('DOMContentLoaded', function() {
                 // GUI / MaterializeCSS
                 var elems = document.querySelectorAll('.sidenav');
-                var instances = M.Sidenav.init(elems, {});
+                sideNav = M.Sidenav.init(elems, {});
             });
          </script>
 
@@ -185,6 +186,8 @@
       <li><div class="divider"></div></li>
       <li><a class="subheader">Settings</a></li>
       <li><a href="#!"><i class="material-icons">settings</i>Local configuration</a></li>
+
+      <li class="dhide-on-large-only" style="position: fixed; bottom: 70px;"><a href="javascript:sideNav[0].close()" class="top-nav full"><i class="material-icons">close</i>Close</a></li>
     </ul>
 
        
