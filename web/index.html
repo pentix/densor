@@ -73,7 +73,8 @@
                         "</td><td>" + s["LastUpdateTime"] + "</td></tr>";
                 }
 
-
+                document.getElementById("sensorCount").innerHTML = Sensors.length;
+                document.getElementById("remotesCount").innerHTML = RemoteInstances.length;
             }
 
             ws = new WebSocket("wss://" + location.hostname + ":8334/api");
@@ -163,10 +164,9 @@
                 <div class="col s4"><i class="large material-icons">desktop_windows</i></div>
                 <div class="col s8" style="padding-left: 2em; line-height: 1.1em;">
                   <b>{{ .DisplayName }}</b><br>
-                  15 Sensors<br>
-                  7 Remote Instances<br>
+                    <span id="sensorCount"></span> Sensors<br>
+                    <span id="remotesCount"></span> Remote Instances<br>
                     <div id="disconnectedIcon" style="visibility: hidden;"><i class="small material-icons red-text">link_off</i></div>
-
                 </div>
             </div>
           </div>
