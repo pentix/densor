@@ -106,12 +106,17 @@
                 ws.send(JSON.stringify(req2));
             };
 
+            ws.onclose = function (evt) {
+              modals[0].open();
+              document.getElementById("disconnectedIcon").style.visibility = "visible";
+            };
+
 
             let sideNav = null;
             document.addEventListener('DOMContentLoaded', function() {
                 // GUI / MaterializeCSS
-                var elems = document.querySelectorAll('.sidenav');
-                sideNav = M.Sidenav.init(elems, {});
+                sideNav = M.Sidenav.init(document.querySelectorAll('.sidenav'), {});
+                modals  = M.Modal.init(document.querySelectorAll('.modal'), {});
             });
          </script>
 
@@ -144,7 +149,7 @@
             <li><a href="badges.html">Statistics</a></li>
             <li><a href="collapsible.html">Registered Actions</a></li>
           </ul>
-        <span class="brand-logo right">
+        <span class="brand-logo right valign-wrapper">
             Densor
         </span>
     </nav>
@@ -159,7 +164,9 @@
                 <div class="col s8" style="padding-left: 2em; line-height: 1.1em;">
                   <b>{{ .DisplayName }}</b><br>
                   15 Sensors<br>
-                  7 Remote Instances
+                  7 Remote Instances<br>
+                    <div id="disconnectedIcon" style="visibility: hidden;"><i class="small material-icons red-text">link_off</i></div>
+
                 </div>
             </div>
           </div>
@@ -229,6 +236,24 @@
                 </table>
             </div>
         </div>
+
+        <div id="connectionLostModal" class="modal">
+            <div class="modal-content">
+                <div class="row">
+                    <div class="col">
+                        <i class="medium material-icons">link_off</i>
+                    </div>
+                    <div class="col">
+                        <h4>We've just lost connection to this instance</h4>
+                    </div>
+                </div>
+                <p>Please refresh the page :/</p>
+            </div>
+            <div class="modal-footer">
+                <a href="#" class="modal-close waves-effect waves-green btn-flat">Agree</a>
+            </div>
+        </div>
+
     </main>
 </body>
 
