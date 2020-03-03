@@ -12,7 +12,7 @@ func StartWebInterface() {
 	http.HandleFunc("/api", WebAPI)
 
 	go WebAPIBroadcast()
-	http.ListenAndServeTLS("0.0.0.0:8334", local.DataDir+"cert.pem", local.DataDir+"key.pem", nil)
+	http.ListenAndServeTLS("0.0.0.0:8334", local.config.GetString("WebTLSCert"), local.config.GetString("WebTLSKey"), nil)
 }
 
 func WebUIRoot(w http.ResponseWriter, req *http.Request) {

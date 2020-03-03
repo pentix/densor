@@ -44,6 +44,8 @@ func readConfig() {
 	viper.SetDefault("DataDir", defaultDataDir)
 	viper.SetDefault("RemoteInstances", []RemoteInstance{})
 	viper.SetDefault("sensors", []string{})
+	viper.SetDefault("WebTLSCert", defaultDataDir+"cert.pem")
+	viper.SetDefault("WebTLSKey", defaultDataDir+"key.pem")
 
 	// Try to parse possible existing yaml file or create it
 	viper.SetConfigFile(configPath)
