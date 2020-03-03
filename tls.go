@@ -48,7 +48,12 @@ func generateTLSCerts() error {
 	if err != nil {
 		panic(err)
 	}
-	template := x509.Certificate{SerialNumber: big.NewInt(1), NotBefore: time.Now(), NotAfter: time.Now().Add(10 * 365 * 24 * time.Hour)}
+
+	// Serials should not collide, otherwise Browsers might complain if multiple instances try to access
+	// the Web UI and a cert using the same serial number is already registered locally. (It is however not relevant to security)
+	serial, _ := rand.Int(rand.Reader, big.NewInt(1<<63-1))
+
+	template := x509.Certificate{SerialNumber: serial, NotBefore: time.Now(), NotAfter: time.Now().Add(10 * 365 * 24 * time.Hour)}
 	certDER, err := x509.CreateCertificate(rand.Reader, &template, &template, &key.PublicKey, key)
 	if err != nil {
 		panic(err)
