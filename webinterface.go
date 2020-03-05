@@ -3,12 +3,15 @@ package main
 import (
 	"html/template"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
 
 func StartWebInterface() {
 	http.HandleFunc("/", WebUIRoot)
+	http.HandleFunc("/login", WebUILogin)
+	http.HandleFunc("/logout", WebUILogout)
 	http.HandleFunc("/api", WebAPI)
 
 	go WebAPIBroadcast()
@@ -16,12 +19,77 @@ func StartWebInterface() {
 }
 
 func WebUIRoot(w http.ResponseWriter, req *http.Request) {
-	t, err := template.ParseFiles("web/index.html")
+	t, err := template.ParseFiles("web/index.html") // todo: parse only once
 	if err != nil {
-		logger.Printf("Error: Web Interface: Could not load template:", err)
+		logger.Printf("Error: Web Interface: Could not load template:", err, err)
+		return
 	}
 
 	t.Execute(w, local)
+}
+
+func WebUILogin(w http.ResponseWriter, req *http.Request) {
+	err := req.ParseForm()
+	if err != nil {
+		logger.Println("Error: Web Interface: Error parsing HTTP data :", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	username := req.Form.Get("username")
+	password := req.Form.Get("password")
+	if username == "" || password == "" {
+		t, err := template.ParseFiles("web/login.html") // todo: parse only once
+		if err != nil {
+			logger.Printf("Error: Web Interface: Could not load template:", err, err)
+			return
+		}
+
+		t.Execute(w, nil)
+		return
+	}
+
+	if username == "test" && password == "demo" {
+		http.SetCookie(w, &http.Cookie{
+			Name:     "sessionID",
+			Value:    "asdfasdf",
+			Path:     "",
+			Domain:   req.Host,
+			Expires:  time.Now().Add(2 * time.Hour),
+			MaxAge:   2 * 60 * 60,
+			Secure:   true,
+			HttpOnly: false,
+			SameSite: http.SameSiteStrictMode,
+		})
+
+		http.Redirect(w, req, "/", http.StatusTemporaryRedirect)
+		return
+
+	} else {
+
+		t, err := template.ParseFiles("web/login.html") // todo: parse only once
+		if err != nil {
+			logger.Printf("Error: Web Interface: Could not load template:", err, err)
+			return
+		}
+
+		t.Execute(w, WebUIMessage{
+			Message: "Maybe wrong pw?",
+			isError: true,
+		})
+		return
+	}
+}
+
+func WebUILogout(w http.ResponseWriter, req *http.Request) {
+	// todo: unregister session and remove cookie from header
+	http.Redirect(w, req, "/login", http.StatusTemporaryRedirect)
+	return
+}
+
+type WebUIMessage struct {
+	Message string
+	isError bool
 }
 
 const (
