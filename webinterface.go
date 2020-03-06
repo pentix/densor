@@ -19,6 +19,11 @@ func StartWebInterface() {
 }
 
 func WebUIRoot(w http.ResponseWriter, req *http.Request) {
+	if !WebUILoggedIn(req) {
+		WebUILogin(w, req)
+		return
+	}
+
 	t, err := template.ParseFiles("web/index.html") // todo: parse only once
 	if err != nil {
 		logger.Printf("Error: Web Interface: Could not load template:", err, err)
@@ -26,6 +31,15 @@ func WebUIRoot(w http.ResponseWriter, req *http.Request) {
 	}
 
 	t.Execute(w, local)
+}
+
+func WebUILoggedIn(req *http.Request) bool {
+	c, err := req.Cookie("sessionID")
+	if err != nil {
+		return false
+	}
+
+	return WebUICheckSession(c.Value)
 }
 
 func WebUILogin(w http.ResponseWriter, req *http.Request) {
@@ -54,7 +68,6 @@ func WebUILogin(w http.ResponseWriter, req *http.Request) {
 			Name:     "sessionID",
 			Value:    "asdfasdf",
 			Path:     "",
-			Domain:   req.Host,
 			Expires:  time.Now().Add(2 * time.Hour),
 			MaxAge:   2 * 60 * 60,
 			Secure:   true,
@@ -74,7 +87,7 @@ func WebUILogin(w http.ResponseWriter, req *http.Request) {
 		}
 
 		t.Execute(w, WebUIMessage{
-			Message: "Maybe wrong pw?",
+			Message: "Check your credentials. Wrong user/password",
 			isError: true,
 		})
 		return

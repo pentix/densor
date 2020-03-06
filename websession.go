@@ -4,6 +4,10 @@ func WebUIRegisterSession() {
 
 }
 
-func WebUICheckSession() {
+func WebUIUnregisterSession() {
 
+}
+
+func WebUICheckSession(sessionID string) bool {
+	return true
 }
